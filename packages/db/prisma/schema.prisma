@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model College {
+    id      String   @id @default(cuid())
+    name    String
+    users   User[]
+    courses Course[]
+    Track   Track[]
+}
+
+model Course {
+    id        String     @id @default(cuid())
+    name      String
+    collegeId String
+    college   College    @relation(fields: [collegeId], references: [id])
+    Account   Account[]
+    Semister  Semister[]
+}
+
+model Account {
+    id               String   @id @default(cuid())
+    userId           String   @unique
+    user             User     @relation(fields: [userId], references: [id])
+    linewaysEmail    String?
+    linewaysPassword String?
+    courseId         String
+    course           Course   @relation(fields: [courseId], references: [id])
+    semister         Semister
+
+    @@index([userId])
+}
+
+enum Semister {
+    First
+    Second
+    Third
+    Fourth
+    Fifth
+    Sixth
+    Seventh
+    Eighth
+}
+
+model User {
+    id           String       @id @default(cuid())
+    name         String?
+    email        String?      @unique
+    password     String?
+    image        String?
+    role         Role         @default(user)
+    collegeId    String?
+    college      College?     @relation(fields: [collegeId], references: [id])
+    token        String?
+    hashedSecret String?
+    submissions  Submission[]
+    quizScores   QuizScore[]
+    Track        Track[]
+    Account      Account?
+}
+
+enum Role {
+    user
+    professor
+    admin
+}
+
+model Submission {
+    id                 String           @id @default(uuid())
+    code               String
+    language           CodeLanguage     @relation(fields: [codeLanguageId], references: [id])
+    codeLanguageId     Int
+    statusId           Int
+    statusDesc         String
+    runtime            Int //in ms
+    memoryUsage        Int //in bytes
+    errorMessage       String?
+    testCasesPassed    Int
+    problemStatement   ProblemStatement @relation(fields: [problemStatementId], references: [id])
+    problemStatementId String
+    user               User?            @relation(fields: [userId], references: [id])
+    userId             String?
+    createdAt          DateTime         @default(now())
+    lastTestCase       TestCase?        @relation(fields: [lastTestCaseId], references: [id])
+    lastTestCaseId     String?
+    stdout             String?
+}
+
+model CodeLanguage {
+    id                Int                @id // judge0 language id
+    value             String // monaco language string
+    label             String
+    problemStatements ProblemStatement[]
+    submissions       Submission[]
+}
+
+model TestCase {
+    id                 String           @id @default(uuid())
+    expectedOutput     String
+    problemStatement   ProblemStatement @relation(fields: [problemStatementId], references: [id])
+    problemStatementId String
+    inputs             String[]
+    Submission         Submission[]
+}
+
+model ProblemStatement {
+    id                 String         @id @default(uuid())
+    testCases          TestCase[]
+    problem            Problem?
+    languagesSupported CodeLanguage[]
+    submissions        Submission[]
+    mainFuncName       String // the function name which will return the output
+    argumentNames      String[]
+}
+
+model Problem {
+    id                 String            @id @default(uuid())
+    title              String
+    description        String
+    notionDocId        String
+    problemType        ProblemType
+    problemStatementId String?           @unique
+    problemStatement   ProblemStatement? @relation(fields: [problemStatementId], references: [id])
+    MCQQuestionId      String?           @unique
+    MCQQuestion        MCQQuestion?      @relation(fields: [MCQQuestionId], references: [id])
+    quizScoreId        String?           @unique
+    QuizScore          QuizScore?        @relation(fields: [quizScoreId], references: [id])
+    TrackProblems      TrackProblems[]
+}
+
+model MCQQuestion {
+    id            String   @id @default(uuid())
+    question      String
+    options       String[]
+    correctOption String
+    problem       Problem?
+    problemId     String
+}
+
+enum ProblemType {
+    Blog
+    Code
+    MCQ
+}
+
+model QuizScore {
+    id        String   @id @default(uuid())
+    score     Int
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    String?
+    problem   Problem?
+    problemId String
+    createdAt DateTime @default(now())
+}
+
+model TrackProblems {
+    track   Track  @relation(fields: [trackId], references: [id])
+    trackId String
+
+    problem   Problem @relation(fields: [problemId], references: [id])
+    problemId String
+
+    sortingOrder Int
+
+    @@id([trackId, problemId])
+}
+
+model Track {
+    id          String          @id @default(uuid())
+    title       String
+    description String
+    image       String
+    Subject     String
+    problems    TrackProblems[]
+    collegeId   String
+    college     College         @relation(fields: [collegeId], references: [id])
+    autherId    String
+    createdBy   User            @relation(fields: [autherId], references: [id])
+    hidden      Boolean         @default(false)
+    createdAt   DateTime        @default(now())
+}
