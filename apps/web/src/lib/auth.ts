@@ -72,6 +72,7 @@ export const authOptions = {
               name: userDb.name,
               email: userDb.email,
               image: userDb.image,
+              role: userDb.role,
               token: jwt,
             };
           } else {
@@ -97,6 +98,7 @@ export const authOptions = {
               id: createdUser.id,
               name: createdUser.name,
               email: createdUser.email,
+              role: createdUser.role,
               token: jwt,
             };
           }
@@ -139,6 +141,7 @@ export const authOptions = {
           id: userDb.id,
           name: userDb.name,
           email: userDb.email,
+          role: userDb.role,
           image: userDb.image,
         };
       }

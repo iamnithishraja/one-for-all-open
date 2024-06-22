@@ -1,3 +1,7 @@
-export default function page() {
-  return <div>Sign in</div>;
-}
+import Signin from "../../components/SignIn";
+
+const SigninPage = async () => {
+  return <Signin />;
+};
+
+export default SigninPage;
