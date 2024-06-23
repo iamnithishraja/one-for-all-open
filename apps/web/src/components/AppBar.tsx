@@ -32,11 +32,15 @@ export const Appbar = () => {
           ) : (
             ""
           )}
-          {user?.role == "professor" || user?.role == "admin" ? (
-            <Link href={"/admin/createtrack"}>
-              <PlusCircledIcon className="h-[2rem] w-[2rem] ml-1 text-gray-500" />
-            </Link>
-          ) : null}
+
+          {
+            //@ts-ignore
+            user?.role == "professor" || user?.role == "admin" ? (
+              <Link href={"/admin/createtrack"}>
+                <PlusCircledIcon className="h-[2rem] w-[2rem] ml-1 text-gray-500" />
+              </Link>
+            ) : null
+          }
           <ModeToggle />
           <UserAccountDropDown />
         </div>

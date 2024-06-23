@@ -1,4 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import {
+  Course,
+  PrismaClient,
+  User,
+  ProblemType,
+  Problem,
+  Track,
+} from "@prisma/client";
 
 const prismaClientSingleton = () => {
   return new PrismaClient();
@@ -16,3 +23,9 @@ const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 export default prisma;
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+export type UserType = User;
+export type CourseType = Course;
+export type TrackType = Track;
+export type ProblemT = Problem;
+export { ProblemType };

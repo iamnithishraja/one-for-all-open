@@ -26,6 +26,7 @@ model Course {
     name      String
     collegeId String
     college   College    @relation(fields: [collegeId], references: [id])
+    tracks    Track[]
     Account   Account[]
     Semister  Semister[]
 }
@@ -184,6 +185,9 @@ model Track {
     image       String
     Subject     String
     problems    TrackProblems[]
+    courseId    String
+    course      Course          @relation(fields: [courseId], references: [id])
+    semister    Semister
     collegeId   String
     college     College         @relation(fields: [collegeId], references: [id])
     autherId    String

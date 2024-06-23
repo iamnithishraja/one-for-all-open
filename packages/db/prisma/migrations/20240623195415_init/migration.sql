@@ -33,17 +33,6 @@ CREATE TABLE "Account" (
     "linewaysPassword" TEXT,
     "courseId" TEXT NOT NULL,
     "semister" "Semister" NOT NULL,
-    "type" TEXT NOT NULL,
-    "provider" TEXT NOT NULL,
-    "providerAccountId" TEXT NOT NULL,
-    "refresh_token" TEXT,
-    "refresh_token_expires_in" INTEGER,
-    "access_token" TEXT,
-    "expires_at" INTEGER,
-    "token_type" TEXT,
-    "scope" TEXT,
-    "id_token" TEXT,
-    "session_state" TEXT,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );
@@ -163,6 +152,8 @@ CREATE TABLE "Track" (
     "description" TEXT NOT NULL,
     "image" TEXT NOT NULL,
     "Subject" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL,
+    "semister" "Semister" NOT NULL,
     "collegeId" TEXT NOT NULL,
     "autherId" TEXT NOT NULL,
     "hidden" BOOLEAN NOT NULL DEFAULT false,
@@ -245,6 +236,9 @@ ALTER TABLE "TrackProblems" ADD CONSTRAINT "TrackProblems_trackId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "TrackProblems" ADD CONSTRAINT "TrackProblems_problemId_fkey" FOREIGN KEY ("problemId") REFERENCES "Problem"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Track" ADD CONSTRAINT "Track_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Track" ADD CONSTRAINT "Track_collegeId_fkey" FOREIGN KEY ("collegeId") REFERENCES "College"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
