@@ -22,26 +22,12 @@ model College {
 }
 
 model Course {
-    id        String     @id @default(cuid())
-    name      String
-    collegeId String
-    college   College    @relation(fields: [collegeId], references: [id])
-    tracks    Track[]
-    Account   Account[]
-    Semister  Semister[]
-}
-
-model Account {
-    id               String   @id @default(cuid())
-    userId           String   @unique
-    user             User     @relation(fields: [userId], references: [id])
-    linewaysEmail    String?
-    linewaysPassword String?
-    courseId         String
-    course           Course   @relation(fields: [courseId], references: [id])
-    semister         Semister
-
-    @@index([userId])
+    id       String     @id @default(cuid())
+    name     String
+    colleges College[]
+    tracks   Track[]
+    users    User[]
+    Semister Semister[]
 }
 
 enum Semister {
@@ -66,10 +52,12 @@ model User {
     college      College?     @relation(fields: [collegeId], references: [id])
     token        String?
     hashedSecret String?
+    courseId     String?
+    course       Course?      @relation(fields: [courseId], references: [id])
+    semister     Semister?
     submissions  Submission[]
     quizScores   QuizScore[]
     Track        Track[]
-    Account      Account?
 }
 
 enum Role {
@@ -100,8 +88,8 @@ model Submission {
 }
 
 model CodeLanguage {
-    id                Int                @id // judge0 language id
-    value             String // monaco language string
+    id                Int                @id
+    value             String
     label             String
     problemStatements ProblemStatement[]
     submissions       Submission[]
@@ -109,36 +97,38 @@ model CodeLanguage {
 
 model TestCase {
     id                 String           @id @default(uuid())
+    input              String
     expectedOutput     String
-    problemStatement   ProblemStatement @relation(fields: [problemStatementId], references: [id])
+    hidden             Boolean          @default(false)
     problemStatementId String
-    inputs             String[]
+    problemStatement   ProblemStatement @relation(fields: [problemStatementId], references: [id])
     Submission         Submission[]
 }
 
 model ProblemStatement {
     id                 String         @id @default(uuid())
+    boilerPlateCode    String
+    mainCode           String
+    correctCode        String
+    problemId          String?        @unique
+    problem            Problem?       @relation(fields: [problemId], references: [id], onDelete: Cascade)
     testCases          TestCase[]
-    problem            Problem?
     languagesSupported CodeLanguage[]
     submissions        Submission[]
-    mainFuncName       String // the function name which will return the output
-    argumentNames      String[]
 }
 
 model Problem {
-    id                 String            @id @default(uuid())
-    title              String
-    description        String
-    notionDocId        String
-    problemType        ProblemType
-    problemStatementId String?           @unique
-    problemStatement   ProblemStatement? @relation(fields: [problemStatementId], references: [id])
-    MCQQuestionId      String?           @unique
-    MCQQuestion        MCQQuestion?      @relation(fields: [MCQQuestionId], references: [id])
-    quizScoreId        String?           @unique
-    QuizScore          QuizScore?        @relation(fields: [quizScoreId], references: [id])
-    TrackProblems      TrackProblems[]
+    id               String            @id @default(uuid())
+    title            String
+    description      String
+    notionDocId      String
+    sortingOrder     Int?
+    trackId          String?           @unique
+    track            Track?            @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    problemType      ProblemType
+    problemStatement ProblemStatement?
+    MCQQuestion      MCQQuestion?
+    QuizScore        QuizScore?
 }
 
 model MCQQuestion {
@@ -146,8 +136,8 @@ model MCQQuestion {
     question      String
     options       String[]
     correctOption String
-    problem       Problem?
-    problemId     String
+    problemId     String?  @unique
+    problem       Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
 }
 
 enum ProblemType {
@@ -161,37 +151,25 @@ model QuizScore {
     score     Int
     user      User?    @relation(fields: [userId], references: [id])
     userId    String?
-    problem   Problem?
-    problemId String
+    problemId String   @unique
+    problem   Problem? @relation(fields: [problemId], references: [id], onDelete: Cascade)
     createdAt DateTime @default(now())
 }
 
-model TrackProblems {
-    track   Track  @relation(fields: [trackId], references: [id])
-    trackId String
-
-    problem   Problem @relation(fields: [problemId], references: [id])
-    problemId String
-
-    sortingOrder Int
-
-    @@id([trackId, problemId])
-}
-
 model Track {
-    id          String          @id @default(uuid())
+    id          String    @id @default(uuid())
     title       String
     description String
     image       String
     Subject     String
-    problems    TrackProblems[]
     courseId    String
-    course      Course          @relation(fields: [courseId], references: [id])
+    Problems    Problem[]
+    course      Course    @relation(fields: [courseId], references: [id])
     semister    Semister
     collegeId   String
-    college     College         @relation(fields: [collegeId], references: [id])
+    college     College   @relation(fields: [collegeId], references: [id])
     autherId    String
-    createdBy   User            @relation(fields: [autherId], references: [id])
-    hidden      Boolean         @default(false)
-    createdAt   DateTime        @default(now())
+    createdBy   User      @relation(fields: [autherId], references: [id])
+    hidden      Boolean   @default(false)
+    createdAt   DateTime  @default(now())
 }

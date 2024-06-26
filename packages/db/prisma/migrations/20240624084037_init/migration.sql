@@ -19,22 +19,9 @@ CREATE TABLE "College" (
 CREATE TABLE "Course" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "collegeId" TEXT NOT NULL,
     "Semister" "Semister"[],
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Account" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "linewaysEmail" TEXT,
-    "linewaysPassword" TEXT,
-    "courseId" TEXT NOT NULL,
-    "semister" "Semister" NOT NULL,
-
-    CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -48,6 +35,8 @@ CREATE TABLE "User" (
     "collegeId" TEXT,
     "token" TEXT,
     "hashedSecret" TEXT,
+    "courseId" TEXT,
+    "semister" "Semister",
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -84,9 +73,8 @@ CREATE TABLE "CodeLanguage" (
 -- CreateTable
 CREATE TABLE "TestCase" (
     "id" TEXT NOT NULL,
-    "expectedOutput" TEXT NOT NULL,
-    "problemStatementId" TEXT NOT NULL,
     "inputs" TEXT[],
+    "problemStatementId" TEXT NOT NULL,
 
     CONSTRAINT "TestCase_pkey" PRIMARY KEY ("id")
 );
@@ -94,8 +82,9 @@ CREATE TABLE "TestCase" (
 -- CreateTable
 CREATE TABLE "ProblemStatement" (
     "id" TEXT NOT NULL,
-    "mainFuncName" TEXT NOT NULL,
-    "argumentNames" TEXT[],
+    "boilerPlateCode" TEXT NOT NULL,
+    "mainCode" TEXT NOT NULL,
+    "correctCode" TEXT NOT NULL,
 
     CONSTRAINT "ProblemStatement_pkey" PRIMARY KEY ("id")
 );
@@ -163,16 +152,16 @@ CREATE TABLE "Track" (
 );
 
 -- CreateTable
+CREATE TABLE "_CollegeToCourse" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "_CodeLanguageToProblemStatement" (
     "A" INTEGER NOT NULL,
     "B" TEXT NOT NULL
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "Account_userId_key" ON "Account"("userId");
-
--- CreateIndex
-CREATE INDEX "Account_userId_idx" ON "Account"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
@@ -187,22 +176,22 @@ CREATE UNIQUE INDEX "Problem_MCQQuestionId_key" ON "Problem"("MCQQuestionId");
 CREATE UNIQUE INDEX "Problem_quizScoreId_key" ON "Problem"("quizScoreId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "_CollegeToCourse_AB_unique" ON "_CollegeToCourse"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_CollegeToCourse_B_index" ON "_CollegeToCourse"("B");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_CodeLanguageToProblemStatement_AB_unique" ON "_CodeLanguageToProblemStatement"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_CodeLanguageToProblemStatement_B_index" ON "_CodeLanguageToProblemStatement"("B");
 
 -- AddForeignKey
-ALTER TABLE "Course" ADD CONSTRAINT "Course_collegeId_fkey" FOREIGN KEY ("collegeId") REFERENCES "College"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Account" ADD CONSTRAINT "Account_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_collegeId_fkey" FOREIGN KEY ("collegeId") REFERENCES "College"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Submission" ADD CONSTRAINT "Submission_codeLanguageId_fkey" FOREIGN KEY ("codeLanguageId") REFERENCES "CodeLanguage"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -245,6 +234,12 @@ ALTER TABLE "Track" ADD CONSTRAINT "Track_collegeId_fkey" FOREIGN KEY ("collegeI
 
 -- AddForeignKey
 ALTER TABLE "Track" ADD CONSTRAINT "Track_autherId_fkey" FOREIGN KEY ("autherId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_CollegeToCourse" ADD CONSTRAINT "_CollegeToCourse_A_fkey" FOREIGN KEY ("A") REFERENCES "College"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_CollegeToCourse" ADD CONSTRAINT "_CollegeToCourse_B_fkey" FOREIGN KEY ("B") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_CodeLanguageToProblemStatement" ADD CONSTRAINT "_CodeLanguageToProblemStatement_A_fkey" FOREIGN KEY ("A") REFERENCES "CodeLanguage"("id") ON DELETE CASCADE ON UPDATE CASCADE;

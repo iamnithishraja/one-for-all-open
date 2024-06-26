@@ -25,7 +25,11 @@ export async function getAllCourses() {
     }
     const courses = await prisma.course.findMany({
       where: {
-        collegeId: userDb.collegeId,
+        colleges: {
+          some: {
+            id: userDb.collegeId,
+          },
+        },
       },
     });
     return {
