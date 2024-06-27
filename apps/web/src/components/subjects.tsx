@@ -17,6 +17,7 @@ export const Subjects = ({ subjects }: { subjects: Subject[] }) => {
   const [selectedSubject, setSelectedSubject] = useRecoilState(selectedSubjectAtom);
 
   const handleSubjectChange = (subject: string) => {
+    console.log("Selected subject changed:", subject);
     if (subject === selectedSubject) {
       setSelectedSubject("");
     } else {
@@ -49,7 +50,7 @@ const SelectSubject = ({ subjects, selectedSubject, handleSubjectChange }: Subje
     <div className="flex justify-center">
       <select
         className="w-[250px] p-2 border rounded"
-        value={selectedSubject || "All Subjects"}
+        value={selectedSubject || ""}
         onChange={(e) => handleSubjectChange(e.target.value)}
       >
         <option value="">All Subjects</option>

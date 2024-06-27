@@ -5,7 +5,7 @@ import { Subjects } from "../components/subjects";
 
 export default async function Page(): Promise<JSX.Element> {
   const tracks = await getTracks();
-  const subjects = (await getAllSubjectsByCollegeAndSem()) as SubjectType[];
+  const subjects: any = await getAllSubjectsByCollegeAndSem();
   return (
     <div>
       <Appbar />
@@ -14,9 +14,18 @@ export default async function Page(): Promise<JSX.Element> {
           Learning Paths
         </div>
       </div>
-      <Subjects
-        subjects={subjects.map((subject) => ({ subject: subject.name }))}
-      />
+      {subjects.error ? (
+        <div>
+          put additinal creadential form here
+          {JSON.stringify(subjects)}
+        </div>
+      ) : (
+        <Subjects
+          subjects={subjects.map((subject: SubjectType) => ({
+            subject: subject.name,
+          }))}
+        />
+      )}
     </div>
   );
 }

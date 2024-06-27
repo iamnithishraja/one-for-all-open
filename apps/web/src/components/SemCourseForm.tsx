@@ -23,11 +23,18 @@ const SemCourseForm = () => {
   const setTrack = useSetRecoilState(createTrackAtom);
 
   async function getAllSubjects() {
-    await getAllSubjectsByCollege(selectedCourse?.id!, selectedSem!);
+    const subs = (await getAllSubjectsByCollege(
+      selectedCourse?.id!,
+      selectedSem!
+    )) as SubjectType[];
+    console.log(subs);
+
+    setSubjects(subs);
   }
 
   useEffect(() => {
-    if (selectedSem && selectedSubject) {
+    if (selectedSem && selectedCourse) {
+      getAllSubjects();
     }
     setTrack((prevState: any) => ({
       ...prevState,
@@ -97,7 +104,24 @@ const SemCourseForm = () => {
           </select>
         </div>
       )}
-      {selectedCourse?.id && selectedSem && <div></div>}
+      {selectedCourse?.id && selectedSem && (
+        <div>
+          <select
+            value={selectedSubject as string}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              setSelectedSubject(e.target.value);
+            }}
+            className="w-full max-w-xs p-2 mb-4 border rounded-lg text-white focus:outline-none"
+          >
+            <option value={undefined}>Select Subject</option>
+            {subjects?.map((subject: SubjectType) => (
+              <option value={subject.id} key={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 };

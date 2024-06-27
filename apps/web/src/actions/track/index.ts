@@ -99,19 +99,12 @@ async function createTrackHandler(
     if (!userDB?.collegeId || userDB.role === "user") {
       return { error: "Unauthorized or insufficient permissions" };
     }
-    const subject = await prismaClient.subject.findFirst({
-      where: {
-        collegeId: userDB.collegeId,
-        semister: data.sem,
-        name: data.subject,
-      },
-    });
     const createdTrack = await prismaClient.track.create({
       data: {
         title: data.title,
         description: data.description,
         image: data.image,
-        subjectId: subject?.id!,
+        subjectId: data.subject,
         hidden: data.hidden,
         semister: data.sem,
         courseId: data.course.id,
@@ -180,13 +173,7 @@ async function updateTrackHandler(
     ) {
       return { error: "Unauthorized or insufficient permissions" };
     }
-    const subject = await prismaClient.subject.findFirst({
-      where: {
-        collegeId: userDB.collegeId,
-        semister: data.sem ?? existingTrack.semister,
-        name: data.subject,
-      },
-    });
+
     const updatedTrack = await prismaClient.track.update({
       where: {
         id: data.id,
@@ -197,7 +184,7 @@ async function updateTrackHandler(
         image: data.image ?? existingTrack.image,
         courseId: data.course?.id ?? existingTrack.courseId,
         hidden: data.hidden ?? existingTrack.hidden,
-        subjectId: data.subject ? subject?.id : existingTrack.subjectId,
+        subjectId: data.subject ?? existingTrack.subjectId,
         semister: data.sem ?? existingTrack.semister,
       },
     });
