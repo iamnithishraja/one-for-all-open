@@ -1,5 +1,5 @@
 "use server";
-import prismaClient from "@repo/db/client";
+import prismaClient, { Semister, SubjectType } from "@repo/db/client";
 import {
   InputTypeCreateTrack,
   ReturnTypeCreateTrack,
@@ -16,6 +16,71 @@ import {
   UpdateTrackSchema,
 } from "./schema";
 import { createSafeAction } from "../../lib/createSafeAction";
+
+export async function getAllSubjectsByCollege(
+  courseId: string,
+  semister: Semister
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const userDB = await prismaClient.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
+    if (!userDB?.collegeId || userDB.role === "user") {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const subjects = await prismaClient.subject.findMany({
+      where: {
+        courseId: courseId,
+        semister: semister,
+        collegeId: userDB.collegeId,
+      },
+    });
+    return subjects;
+  } catch (error: any) {
+    return { error: error.message || "Failed to get subjects." };
+  }
+}
+export async function getAllSubjectsByCollegeAndSem(): Promise<
+  SubjectType[] | { error: string }
+> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const userDB = await prismaClient.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
+    if (
+      !userDB?.collegeId ||
+      userDB.role === "user" ||
+      !userDB.semister ||
+      !userDB.courseId
+    ) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const subjects = await prismaClient.subject.findMany({
+      where: {
+        courseId: userDB.courseId,
+        collegeId: userDB.collegeId,
+        semister: userDB.semister,
+      },
+    });
+    return subjects;
+  } catch (error: any) {
+    return { error: error.message || "Failed to get subjects." };
+  }
+}
 
 async function createTrackHandler(
   data: InputTypeCreateTrack
@@ -34,12 +99,19 @@ async function createTrackHandler(
     if (!userDB?.collegeId || userDB.role === "user") {
       return { error: "Unauthorized or insufficient permissions" };
     }
+    const subject = await prismaClient.subject.findFirst({
+      where: {
+        collegeId: userDB.collegeId,
+        semister: data.sem,
+        name: data.subject,
+      },
+    });
     const createdTrack = await prismaClient.track.create({
       data: {
         title: data.title,
         description: data.description,
         image: data.image,
-        Subject: data.subject,
+        subjectId: subject?.id!,
         hidden: data.hidden,
         semister: data.sem,
         courseId: data.course.id,
@@ -70,8 +142,8 @@ export async function getTracks() {
     }
     const tracks = await prismaClient.track.findMany({
       where: {
-        collegeId: userDB?.collegeId!,
-        semister: userDB.semister!,
+        collegeId: userDB.collegeId,
+        semister: userDB.semister,
       },
     });
     return { data: tracks };
@@ -108,6 +180,13 @@ async function updateTrackHandler(
     ) {
       return { error: "Unauthorized or insufficient permissions" };
     }
+    const subject = await prismaClient.subject.findFirst({
+      where: {
+        collegeId: userDB.collegeId,
+        semister: data.sem ?? existingTrack.semister,
+        name: data.subject,
+      },
+    });
     const updatedTrack = await prismaClient.track.update({
       where: {
         id: data.id,
@@ -118,7 +197,7 @@ async function updateTrackHandler(
         image: data.image ?? existingTrack.image,
         courseId: data.course?.id ?? existingTrack.courseId,
         hidden: data.hidden ?? existingTrack.hidden,
-        Subject: data.subject ?? existingTrack.Subject,
+        subjectId: data.subject ? subject?.id : existingTrack.subjectId,
         semister: data.sem ?? existingTrack.semister,
       },
     });

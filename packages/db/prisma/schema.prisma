@@ -14,11 +14,12 @@ datasource db {
 }
 
 model College {
-    id      String   @id @default(cuid())
+    id      String    @id @default(cuid())
     name    String
     users   User[]
     courses Course[]
     Track   Track[]
+    Subject Subject[]
 }
 
 model Course {
@@ -28,6 +29,7 @@ model Course {
     tracks   Track[]
     users    User[]
     Semister Semister[]
+    Subject  Subject[]
 }
 
 enum Semister {
@@ -88,11 +90,11 @@ model Submission {
 }
 
 model CodeLanguage {
-    id                Int                @id
-    value             String
-    label             String
-    problemStatements ProblemStatement[]
-    submissions       Submission[]
+    id          Int          @id
+    value       String
+    label       String
+    programs    Program[]
+    submissions Submission[]
 }
 
 model TestCase {
@@ -105,16 +107,24 @@ model TestCase {
     Submission         Submission[]
 }
 
+model Program {
+    id               String           @id @default(uuid())
+    boilerPlateCode  String
+    mainCode         String
+    correctCode      String
+    problemId        String           @unique
+    problemStatement ProblemStatement @relation(fields: [problemId], references: [id], onDelete: Cascade)
+    codeLaungageId   Int              @unique
+    codeLaungage     CodeLanguage     @relation(fields: [codeLaungageId], references: [id], onDelete: Cascade)
+}
+
 model ProblemStatement {
-    id                 String         @id @default(uuid())
-    boilerPlateCode    String
-    mainCode           String
-    correctCode        String
-    problemId          String?        @unique
-    problem            Problem?       @relation(fields: [problemId], references: [id], onDelete: Cascade)
-    testCases          TestCase[]
-    languagesSupported CodeLanguage[]
-    submissions        Submission[]
+    id          String       @id @default(uuid())
+    programs    Program[]
+    problemId   String?      @unique
+    problem     Problem?     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+    testCases   TestCase[]
+    submissions Submission[]
 }
 
 model Problem {
@@ -161,7 +171,8 @@ model Track {
     title       String
     description String
     image       String
-    Subject     String
+    subjectId   String
+    subject     Subject   @relation(fields: [subjectId], references: [id])
     courseId    String
     Problems    Problem[]
     course      Course    @relation(fields: [courseId], references: [id])
@@ -172,4 +183,15 @@ model Track {
     createdBy   User      @relation(fields: [autherId], references: [id])
     hidden      Boolean   @default(false)
     createdAt   DateTime  @default(now())
+}
+
+model Subject {
+    id        String   @id @default(uuid())
+    name      String
+    semister  Semister
+    courseId  String
+    course    Course   @relation(fields: [courseId], references: [id])
+    collegeId String
+    college   College  @relation(fields: [collegeId], references: [id])
+    Track     Track[]
 }

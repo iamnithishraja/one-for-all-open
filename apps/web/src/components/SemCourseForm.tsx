@@ -1,25 +1,41 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getAllCourses } from "../actions/problem";
-import { CourseType } from "@repo/db/client";
+import { CourseType, Semister, SubjectType } from "@repo/db/client";
 import { useSetRecoilState } from "recoil";
 import { createTrackAtom } from "../atoms/adminAtoms";
+import { getAllSubjectsByCollege } from "../actions/track";
 
 const SemCourseForm = () => {
   const [courses, setCourses] = useState<null | CourseType[]>(null);
   const [selectedCourse, setSelectedCourse] = useState<CourseType | undefined>(
     undefined
   );
-  const [selectedSem, setSelectedSem] = useState<String | undefined>(undefined);
+  const [selectedSem, setSelectedSem] = useState<Semister | undefined>(
+    undefined
+  );
+  const [subjects, setSubjects] = useState<SubjectType[] | undefined>(
+    undefined
+  );
+  const [selectedSubject, setSelectedSubject] = useState<string | undefined>(
+    undefined
+  );
   const setTrack = useSetRecoilState(createTrackAtom);
 
+  async function getAllSubjects() {
+    await getAllSubjectsByCollege(selectedCourse?.id!, selectedSem!);
+  }
+
   useEffect(() => {
+    if (selectedSem && selectedSubject) {
+    }
     setTrack((prevState: any) => ({
       ...prevState,
       sem: selectedSem,
       course: selectedCourse,
+      subjectId: selectedSubject,
     }));
-  }, [selectedCourse, selectedSem]);
+  }, [selectedCourse, selectedSem, selectedSubject]);
 
   async function getReqData() {
     const fcourses = await getAllCourses();
@@ -44,7 +60,7 @@ const SemCourseForm = () => {
   const handleCourseSemChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    setSelectedSem(event.target.value);
+    setSelectedSem(event.target.value as Semister);
   };
 
   return (
@@ -68,12 +84,12 @@ const SemCourseForm = () => {
       {selectedCourse?.id && (
         <div>
           <select
-            value={selectedSem as string}
+            value={selectedSem as Semister}
             onChange={handleCourseSemChange}
             className="w-full max-w-xs p-2 mb-4 border rounded-lg text-white focus:outline-none"
           >
             <option value={undefined}>Select semister</option>
-            {selectedCourse.Semister.map((sem) => (
+            {selectedCourse.Semister.map((sem: Semister) => (
               <option value={sem} key={sem}>
                 {sem}
               </option>
@@ -81,6 +97,7 @@ const SemCourseForm = () => {
           </select>
         </div>
       )}
+      {selectedCourse?.id && selectedSem && <div></div>}
     </div>
   );
 };

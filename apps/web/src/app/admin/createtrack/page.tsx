@@ -74,19 +74,6 @@ export default () => {
             }
           />
         </div>
-        <div className="w-1/2 my-4">
-          <Label className="text-xl my-2">Subject</Label>
-          <Input
-            className="px-3 rounded-md"
-            placeholder="subject name"
-            onChange={(e) => {
-              setTrack((prevTrack: any) => ({
-                ...prevTrack,
-                subject: e.target.value,
-              }));
-            }}
-          />
-        </div>
         <SemCourseForm />
         <Button
           className="bg-white text-black"

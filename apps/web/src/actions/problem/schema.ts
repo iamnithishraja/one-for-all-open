@@ -1,24 +1,79 @@
 import z from "zod";
 
-export const createProblemsSchema = z.object({
+export const createProblemSchema = z.object({
   trackId: z.string(),
   title: z.string(),
   description: z.string(),
   type: z.enum(["Code", "Blog", "MCQ"]),
   notionDocId: z.string(),
-  mainCode: z.string().optional(),
-  boilerPlateCode: z.string().optional(),
-  correctCode: z.string().optional(),
-  codeLanguages: z.array(z.object({ id: z.number() })).optional(),
-  testCases: z
+  sortingOrder: z.number().optional(),
+  programs: z
     .array(
       z.object({
-        inputs: z.array(z.string()).optional(),
+        mainCode: z.string(),
+        boilerPlateCode: z.string(),
+        correctCode: z.string(),
+        languageId: z.number(),
       })
     )
     .optional(),
-  question: z.string().optional(),
-  options: z.array(z.string()).optional(),
-  correctOption: z.string().optional(),
+  testCases: z
+    .array(
+      z.object({
+        input: z.string(),
+        expectedOutput: z.string(),
+        hidden: z.boolean(),
+      })
+    )
+    .optional(),
+  mcqQuestion: z
+    .object({
+      question: z.string(),
+      options: z.array(z.string()),
+      correctOption: z.string(),
+    })
+    .optional(),
   score: z.number().optional(),
+});
+
+export const updateProblemSchema = z.object({
+  id: z.string(),
+  trackId: z.string(),
+  title: z.string(),
+  description: z.string(),
+  type: z.enum(["Code", "Blog", "MCQ"]),
+  notionDocId: z.string(),
+  sortingOrder: z.number().optional(),
+  programs: z
+    .array(
+      z.object({
+        mainCode: z.string(),
+        boilerPlateCode: z.string(),
+        correctCode: z.string(),
+        languageId: z.number(),
+      })
+    )
+    .optional(),
+  testCases: z
+    .array(
+      z.object({
+        input: z.string(),
+        expectedOutput: z.string(),
+        hidden: z.boolean(),
+      })
+    )
+    .optional(),
+  mcqQuestion: z
+    .object({
+      question: z.string(),
+      options: z.array(z.string()),
+      correctOption: z.string(),
+    })
+    .optional(),
+  score: z.number().optional(),
+});
+
+export const deleteProblemSchema = z.object({
+  id: z.string(),
+  trackId: z.string(),
 });
