@@ -3,3 +3,4 @@ export * from "./ui/input";
 export * from "./ui/label";
 export * from "./ui/resizable";
 export * from "./ui/textarea";
+export * from "./ui/switch";

@@ -6,7 +6,11 @@ import {
   Problem,
   Track,
   Semister,
-  Subject
+  Program,
+  Subject,
+  CodeLanguage,
+  TestCase,
+  MCQQuestion,
 } from "@prisma/client";
 
 const prismaClientSingleton = () => {
@@ -31,4 +35,8 @@ export type CourseType = Course;
 export type TrackType = Track;
 export type ProblemT = Problem;
 export type SubjectType = Subject;
-export { ProblemType ,Semister};
+export type ProgramType = Program;
+export type CodeLanguageType = CodeLanguage;
+export type TestCaseType = TestCase;
+export type McqType = MCQQuestion;
+export { ProblemType, Semister };

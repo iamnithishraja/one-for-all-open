@@ -63,7 +63,6 @@ export async function getAllSubjectsByCollegeAndSem(): Promise<
     });
     if (
       !userDB?.collegeId ||
-      userDB.role === "user" ||
       !userDB.semister ||
       !userDB.courseId
     ) {
@@ -138,8 +137,12 @@ export async function getTracks() {
         collegeId: userDB.collegeId,
         semister: userDB.semister,
       },
+      include: {
+        subject: true,
+        Problems: true,
+      },
     });
-    return { data: tracks };
+    return tracks;
   } catch (error: any) {
     return { error: error.message || "Failed to get tracks." };
   }
