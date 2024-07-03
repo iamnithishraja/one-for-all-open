@@ -4,73 +4,95 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+import { Button } from "@repo/ui";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@repo/ui";
+import { Input } from "@repo/ui";
+import { Label } from "@repo/ui";
+
 const Signin = () => {
-  const session = useSession();
-  const router = useRouter();
-  const redirected = useRef(false);
-  useEffect(() => {
-    if (redirected.current === false && session.data?.user) {
-      const redirectUrl = localStorage.getItem("loginRedirectUrl");
-      localStorage.removeItem("loginRedirectUrl");
-      router.replace(redirectUrl || "/");
-      redirected.current = true;
-    }
-  }, [redirected, session, router]);
+	const session = useSession();
+	const router = useRouter();
+	const redirected = useRef(false);
+	useEffect(() => {
+		if (redirected.current === false && session.data?.user) {
+			const redirectUrl = localStorage.getItem("loginRedirectUrl");
+			localStorage.removeItem("loginRedirectUrl");
+			router.replace(redirectUrl || "/");
+			redirected.current = true;
+		}
+	}, [redirected, session, router]);
 
-  return (
-    <div className="flex bg-black">
-      <div className="w-full md:w-2/5 bg-black flex justify-center items-center h-screen max-sm:hidden max-md:hidden">
-        <div>
-          <h1 className="text-4xl font-bold mb-4 text-white">One-For-All</h1>
-          <div className="grid grid-cols-3 gap-4">
-            {[...Array(9)].map((_, index) => (
-              <div key={index} className="opacity-50">
-                <i className="fas fa-arrow-down fa-3x"></i>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="w-full h-screen md:w-3/5 bg-gray-900 flex justify-center items-center">
-        <div className="w-full max-w-md">
-          <div className="p-5">
-            <h2 className="text-2xl font-semibold mb-2 text-white text-center">
-              Log In
-            </h2>
-          </div>
-          <div className=" mb-4  justify-center py-1 sm:px-6 lg:px-8 ">
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-              <div className="bg-white py-12 px-4 shadow sm:rounded-lg sm:px-10">
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <p className="font-normal text-2xl text-gray-900">Welcome</p>
-
-                  <p className="font-light text-sm text-gray-600">
-                    Log in to continue to One-For-All.
-                  </p>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border rounded font-light text-md text-gray-900 hover:bg-gray-200 focus:outline-none focus:ring-2 "
-                    onClick={async () => {
-                      await signIn("google");
-                    }}
-                  >
-                    <Image
-                      src="/google.svg"
-                      className="w-5 h-5 mr-2"
-                      alt="Google Icon"
-                      width={25}
-                      height={25}
-                    />
-                    Continue with Google
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="flex justify-center items-center min-h-screen">  
+			<Card className="mx-auto max-w-sm p-4">
+				<CardHeader>
+					<CardTitle className="text-xl">Sign in</CardTitle>
+					<CardDescription>
+						Enter your information to create an account
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="grid gap-4">
+						<div className="grid grid-cols-2 gap-4">
+							<div className="grid gap-2">
+								<Label htmlFor="first-name">First name</Label>
+								<Input id="first-name" placeholder="Max" required />
+							</div>
+							<div className="grid gap-2">
+								<Label htmlFor="last-name">Last name</Label>
+								<Input
+									id="last-name"
+									placeholder="Robinson"
+									required
+								/>
+							</div>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="m@example.com"
+								required
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="password">Password</Label>
+							<Input id="password" type="password" />
+						</div>
+						<Button
+							type="submit"
+							className="w-full"
+							onClick={async () => {
+								await signIn("credentials", {
+									name: "string",
+									email: "string",
+									password: "string",
+								});
+							}}
+						>
+							Sign in
+						</Button>
+						<Button
+							variant="outline"
+							className="w-full"
+							onClick={async () => {
+								await signIn("google");
+							}}
+						>
+							Sign in with Google
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
+		</div>
+	);
 };
 
 export default Signin;
