@@ -12,35 +12,29 @@ export const Appbar = () => {
   const user = session.data?.user;
 
   return (
-    <div className="bg-zinc-50 dark:bg-zinc-950 p-3 flex justify-center shadow-md sticky top-0 z-50">
-      <div className="max-w-screen-xl flex justify-between w-full">
+    <div className="bg-background border-b border-border sticky top-0 z-50">
+      <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link href={"/"}>
-          <div className="dark:text-zinc-100 text-zinc-950 text-2xl font-semibold">
+          <div className="text-foreground text-2xl font-semibold">
             One For All
           </div>
         </Link>
-        <div className="flex items-center gap-2">
-          {!user ? (
+        <div className="flex items-center gap-4">
+          {!user && (
             <Button
-              variant={"link"}
+              variant="ghost"
               onClick={async () => {
                 await signIn();
               }}
             >
               Login
             </Button>
-          ) : (
-            ""
           )}
-
-          {
-            //@ts-ignore
-            user?.role == "professor" || user?.role == "admin" ? (
-              <Link href={"/admin/createtrack"}>
-                <PlusCircledIcon className="h-[2rem] w-[2rem] ml-1 text-gray-500" />
-              </Link>
-            ) : null
-          }
+          {(user?.role === "professor" || user?.role === "admin") && (
+            <Link href="/admin/track">
+              <PlusCircledIcon className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
+          )}
           <ModeToggle />
           <UserAccountDropDown />
         </div>
