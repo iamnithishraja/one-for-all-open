@@ -31,7 +31,7 @@ const ProblemStatementForm = ({ id }: { id: number }) => {
         <TextArea
           id="mainCode"
           className="w-full mt-1 bg-background/50 text-foreground border border-foreground p-1"
-          placeholder={"add(a, b):"}
+          placeholder={"def add(a, b):"}
           value={program?.mainCode}
           onChange={(e) =>
             setProgram((prevValue) => ({
@@ -75,7 +75,7 @@ const ProblemStatementForm = ({ id }: { id: number }) => {
         <TextArea
           id="correctCode"
           className="w-full mt-1 bg-background/50 text-foreground border border-foreground p-1"
-          placeholder={"add(a, b):\n    return a+b"}
+          placeholder={"def add(a, b):\n    return a+b"}
           value={program?.correctCode}
           onChange={(e) =>
             setProgram((prevValue) => ({

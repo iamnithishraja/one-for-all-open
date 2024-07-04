@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@repo/ui";
 import { EnterIcon } from "@radix-ui/react-icons";
-import { getAllProblems } from "../actions/problem";
 import { TracksType } from "../types/userTypes";
 
 type TrackPreviewProps = {

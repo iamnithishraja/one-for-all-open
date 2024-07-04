@@ -1,0 +1,11 @@
+.notion-header {
+  display: none !important;
+}
+
+.notion-page {
+  padding: 0px !important;
+}
+
+.notion-frame{
+  padding: 0%;
+}

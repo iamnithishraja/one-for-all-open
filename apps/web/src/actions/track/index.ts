@@ -61,11 +61,7 @@ export async function getAllSubjectsByCollegeAndSem(): Promise<
         id: session.user.id,
       },
     });
-    if (
-      !userDB?.collegeId ||
-      !userDB.semister ||
-      !userDB.courseId
-    ) {
+    if (!userDB?.collegeId || !userDB.semister || !userDB.courseId) {
       return { error: "Unauthorized or insufficient permissions" };
     }
     const subjects = await prismaClient.subject.findMany({
@@ -143,6 +139,36 @@ export async function getTracks() {
       },
     });
     return tracks;
+  } catch (error: any) {
+    return { error: error.message || "Failed to get tracks." };
+  }
+}
+
+export async function getTrackById(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const userDB = await prismaClient.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
+    if (!userDB?.collegeId || !userDB.semister) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const track = await prismaClient.track.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        subject: true,
+        Problems: true,
+      },
+    });
+    return track;
   } catch (error: any) {
     return { error: error.message || "Failed to get tracks." };
   }

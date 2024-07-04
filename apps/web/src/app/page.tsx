@@ -1,6 +1,6 @@
 import { SubjectType } from "@repo/db/client";
 import { getAllSubjectsByCollegeAndSem, getTracks } from "../actions/track";
-import { Appbar } from "../components/AppBar";
+import { Appbar } from "../components/app-bar/AppBar";
 import { Subjects } from "../components/subjects";
 import { Tracks } from "../components/Tracks";
 import { TracksType } from "../types/userTypes";

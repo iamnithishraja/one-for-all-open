@@ -18,12 +18,14 @@ import { useRouter } from "next/navigation";
 import { useAction } from "../hooks/useAction";
 import { deleteTrack } from "../actions/track";
 import { PlusCircledIcon } from "@radix-ui/react-icons";
+import { currentTrackDetails } from "../atoms/userAtoms";
 
 export function TrackCard({ track }: { track: TracksType }) {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const setTrack = useSetRecoilState(trackAtom);
   const session = useSession();
   const router = useRouter();
+  const setCurrentTrack =  useSetRecoilState(currentTrackDetails);
   const user = session.data?.user as unknown as user;
   const { execute, fieldErrors } = useAction(deleteTrack, {
     onSuccess: () => {
@@ -52,7 +54,9 @@ export function TrackCard({ track }: { track: TracksType }) {
           />
           <div className="flex flex-col justify-between flex-grow">
             <div>
-              <h2 className="text-2xl font-bold text-primary mb-2">{track.title}</h2>
+              <h2 className="text-2xl font-bold text-primary mb-2">
+                {track.title}
+              </h2>
               <p className="text-sm text-foreground/80 mb-3">
                 {track.description.slice(0, 180) +
                   (track.description.length > 180 ? "..." : "")}
@@ -106,7 +110,10 @@ export function TrackCard({ track }: { track: TracksType }) {
                     ? `/tracks/${track.id}/${track.Problems[0]?.id}`
                     : "#"
                 }
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  setCurrentTrack(track);
+                  e.stopPropagation();
+                }}
               >
                 <Button
                   size={"lg"}

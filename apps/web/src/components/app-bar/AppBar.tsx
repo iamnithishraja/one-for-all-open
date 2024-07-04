@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@repo/ui";
-import { ModeToggle } from "./ModeToggle";
+import { ModeToggle } from "../ModeToggle";
 import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import UserAccountDropDown from "./UserAccountDropDown";
+import UserAccountDropDown from "../UserAccountDropDown";
 import { PlusCircledIcon } from "@radix-ui/react-icons";
 
 export const Appbar = () => {
