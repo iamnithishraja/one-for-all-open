@@ -1,13 +1,17 @@
 "use client";
 import { signIn, useSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 const Signin = () => {
   const session = useSession();
   const router = useRouter();
   const redirected = useRef(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   useEffect(() => {
     if (redirected.current === false && session.data?.user) {
       const redirectUrl = localStorage.getItem("loginRedirectUrl");
@@ -17,56 +21,93 @@ const Signin = () => {
     }
   }, [redirected, session, router]);
 
-  return (
-    <div className="flex bg-black">
-      <div className="w-full md:w-2/5 bg-black flex justify-center items-center h-screen max-sm:hidden max-md:hidden">
-        <div>
-          <h1 className="text-4xl font-bold mb-4 text-white">One-For-All</h1>
-          <div className="grid grid-cols-3 gap-4">
-            {[...Array(9)].map((_, index) => (
-              <div key={index} className="opacity-50">
-                <i className="fas fa-arrow-down fa-3x"></i>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="w-full h-screen md:w-3/5 bg-gray-900 flex justify-center items-center">
-        <div className="w-full max-w-md">
-          <div className="p-5">
-            <h2 className="text-2xl font-semibold mb-2 text-white text-center">
-              Log In
-            </h2>
-          </div>
-          <div className=" mb-4  justify-center py-1 sm:px-6 lg:px-8 ">
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-              <div className="bg-white py-12 px-4 shadow sm:rounded-lg sm:px-10">
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <p className="font-normal text-2xl text-gray-900">Welcome</p>
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    if (isSignUp) {
+      await signIn("credentials", { name, email, password });
+    } else {
+      await signIn("credentials", { email, password });
+    }
+  };
 
-                  <p className="font-light text-sm text-gray-600">
-                    Log in to continue to One-For-All.
-                  </p>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center items-center gap-2 py-3 px-4 border rounded font-light text-md text-gray-900 hover:bg-gray-200 focus:outline-none focus:ring-2 "
-                    onClick={async () => {
-                      await signIn("google");
-                    }}
-                  >
-                    <Image
-                      src="/google.svg"
-                      className="w-5 h-5 mr-2"
-                      alt="Google Icon"
-                      width={25}
-                      height={25}
-                    />
-                    Continue with Google
-                  </button>
-                </div>
-              </div>
+  const handleGoogleSignIn = async () => {
+    await signIn("google");
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-background text-foreground">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-md">
+        <h2 className="text-3xl font-bold text-center">
+          {isSignUp ? "Sign up" : "Sign in"}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {isSignUp && (
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium">
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                required
+                className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
+          )}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              {isSignUp ? "Sign up" : "Sign in"}
+            </button>
+          </div>
+        </form>
+        <div>
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          >
+            Sign in with Google
+          </button>
+        </div>
+        <div className="text-center">
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-primary hover:underline focus:outline-none"
+          >
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
+          </button>
         </div>
       </div>
     </div>
