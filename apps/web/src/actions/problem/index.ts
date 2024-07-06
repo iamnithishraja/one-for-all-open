@@ -144,47 +144,54 @@ async function updateProblemHandler(
       sortingOrder: data.sortingOrder,
     };
 
-    if (data.type !== "Blog") {
+    if (data.type !== "Blog" && data.score !== undefined) {
+      await prisma.quizScore.deleteMany({
+        where: { problemId: data.id, userId: session.user.id },
+      });
       updateData.QuizScore = {
-        upsert: {
-          create: { score: data.score ?? 0, userId: session.user.id },
-          update: { score: data.score },
-        },
+        create: { score: data.score, userId: session.user.id },
       };
     }
 
     if (data.type === "Code") {
+      await prisma.$transaction([
+        prisma.testCase.deleteMany({
+          where: { problemStatement: { problemId: data.id } },
+        }),
+        prisma.program.deleteMany({
+          where: { problemStatement: { problemId: data.id } },
+        }),
+        prisma.problemStatement.deleteMany({ where: { problemId: data.id } }),
+      ]);
+
       updateData.problemStatement = {
-        upsert: {
-          create: {
-            programs: { createMany: { data: data.programs ?? [] } },
-            testCases: { createMany: { data: data.testCases ?? [] } },
-          },
-          update: {
-            programs: {
-              deleteMany: {},
-              createMany: { data: data.programs ?? [] },
+        create: {
+          programs: {
+            createMany: {
+              data:
+                data.programs?.map((pGram) => ({
+                  mainCode: pGram.mainCode,
+                  boilerPlateCode: pGram.boilerPlateCode,
+                  correctCode: pGram.correctCode,
+                  codeLaungageId: pGram.languageId,
+                })) ?? [],
             },
-            testCases: {
-              deleteMany: {},
-              createMany: { data: data.testCases ?? [] },
+          },
+          testCases: {
+            createMany: {
+              data: data.testCases ?? [],
             },
           },
         },
       };
-    } else if (data.type === "MCQ") {
+    } else if (data.type === "MCQ" && data.mcqQuestion) {
+      await prisma.mCQQuestion.deleteMany({ where: { problemId: data.id } });
+
       updateData.MCQQuestion = {
-        upsert: {
-          create: {
-            question: data.mcqQuestion?.question ?? "",
-            options: data.mcqQuestion?.options ?? [],
-            correctOption: data.mcqQuestion?.correctOption ?? "",
-          },
-          update: {
-            question: data.mcqQuestion?.question,
-            options: data.mcqQuestion?.options,
-            correctOption: data.mcqQuestion?.correctOption,
-          },
+        create: {
+          question: data.mcqQuestion.question,
+          options: data.mcqQuestion.options,
+          correctOption: data.mcqQuestion.correctOption,
         },
       };
     }
@@ -196,7 +203,7 @@ async function updateProblemHandler(
 
     return { data: updatedProblem };
   } catch (error: any) {
-    console.error(error);
+    console.log(error);
     return { error: error.message || "Failed to update problem" };
   }
 }
@@ -348,6 +355,31 @@ export const getAllCodeLanguage = async () => {
     return { data: codeLanguages };
   } catch (error: any) {
     console.error(error);
+    return { error: "Failed to get all languages" };
+  }
+};
+
+export const getAllTestCasesByProblemStatementId = async (
+  problemStatementId: string,
+  trackId: string
+) => {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const validation = await validateUserAndTrack(session.user.id, trackId);
+    if ("error" in validation) {
+      return { error: validation.error };
+    }
+    const testCases = await prisma.testCase.findMany({
+      where: {
+        problemStatementId: problemStatementId,
+      },
+    });
+    return testCases;
+  } catch (error) {
     return { error: "Failed to get all languages" };
   }
 };

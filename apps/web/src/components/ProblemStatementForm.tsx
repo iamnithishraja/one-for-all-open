@@ -23,20 +23,20 @@ const ProblemStatementForm = ({ id }: { id: number }) => {
     <div>
       <div className="py-4">
         <Label
-          htmlFor="mainCode"
+          htmlFor="boilerPlateCode"
           className="text-lg font-medium text-foreground"
         >
           Boiler PlateCode (this is the code that user sees on the screen)
         </Label>
         <TextArea
-          id="mainCode"
+          id="boilerPlateCode"
           className="w-full mt-1 bg-background/50 text-foreground border border-foreground p-1"
           placeholder={"def add(a, b):"}
-          value={program?.mainCode}
+          value={program?.boilerPlateCode}
           onChange={(e) =>
             setProgram((prevValue) => ({
               ...prevValue,
-              mainCode: e.target.value,
+              boilerPlateCode: e.target.value,
             }))
           }
           rows={5}
@@ -44,22 +44,22 @@ const ProblemStatementForm = ({ id }: { id: number }) => {
       </div>
       <div className="py-4">
         <Label
-          htmlFor="boilerPlateCode"
+          htmlFor="mainCode"
           className="text-lg font-medium text-foreground"
         >
           Main Code (assume you get test case as a string named input)
         </Label>
         <TextArea
-          id="boilerPlateCode"
+          id="mainCode"
           className="w-full mt-1 bg-background/50 text-foreground border border-foreground p-1"
           placeholder={
             "# variable input is automatically injected to your code and will always be of type string like: input = '10 20' \nx = input.split(' ')\nnum1,num2 = int(x[0]), int(x[1])\nadd(num1, num2)"
           }
-          value={program?.boilerPlateCode}
+          value={program?.mainCode}
           onChange={(e) =>
             setProgram((prevValue) => ({
               ...prevValue,
-              boilerPlateCode: e.target.value,
+              mainCode: e.target.value,
             }))
           }
           rows={5}

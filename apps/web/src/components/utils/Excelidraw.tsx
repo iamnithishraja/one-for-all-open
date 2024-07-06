@@ -3,17 +3,19 @@ const ExcalidrawEmbed = ({
   onClose,
   isMaximized,
   onToggleMaximize,
+  leftWidth,
 }: {
   isOpen: Boolean;
   onClose: () => void;
   isMaximized: Boolean;
   onToggleMaximize: () => void;
+  leftWidth: Number;
 }) => {
   if (!isOpen) return null;
 
   const style = isMaximized
     ? { width: "100%", height: "calc(100% - 48px)" }
-    : { width: "50%", height: "70%" };
+    : { width: `${leftWidth}%`, height: "70%" };
 
   return (
     <div

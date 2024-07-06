@@ -6,7 +6,15 @@ export const selectedSubjectAtom = atom({
   default: "All Subjects",
 });
 
-export const currentTrackDetails = atom<TracksType|undefined>({
+export const currentTrackDetails = atom<TracksType | undefined>({
   key: "currentTrack",
   default: undefined,
+});
+
+export const programAtom = atom({
+  key: "programAtom",
+  default: {
+    languageId: 13,
+    code: "",
+  },
 });

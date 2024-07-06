@@ -54,7 +54,7 @@ export async function getAllSubjectsByCollegeAndSem(): Promise<
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-      return { error: "Unauthorized or insufficient permissions" };
+      return { error: "user not logged in" };
     }
     const userDB = await prismaClient.user.findUnique({
       where: {
@@ -165,7 +165,11 @@ export async function getTrackById(id: string) {
       },
       include: {
         subject: true,
-        Problems: true,
+        Problems: {
+          orderBy: {
+            sortingOrder: "asc",
+          },
+        },
       },
     });
     return track;

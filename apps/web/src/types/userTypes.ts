@@ -1,4 +1,5 @@
 import {
+  CodeLanguageType,
   McqType,
   ProblemStatementType,
   ProblemT,
@@ -20,9 +21,13 @@ export interface TracksType extends TrackType {
   subject: SubjectType;
 }
 
+export interface programsT extends Partial<ProgramType> {
+  codeLaungage: CodeLanguageType;
+}
+
 export type ProblemWithRelations = ProblemT & {
   problemStatement?: ProblemStatementType & {
-    programs: ProgramType[];
+    programs: programsT[];
     testCases: TestCaseType[];
   };
   MCQQuestion?: McqType;

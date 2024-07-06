@@ -7,6 +7,9 @@ import BlogRender from "../../../components/renderers/BlogRender";
 import CodeRenderer from "../../../components/renderers/CodeRenderer";
 import McqRenderer from "../../../components/renderers/McqRenderer";
 import { getTrackById } from "../../../actions/track";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../lib/auth";
+import FloatingButtons from "../../../components/FlotingButtons";
 
 const notion = new NotionAPI();
 
@@ -19,6 +22,8 @@ export default async function Problem({
     params.trackId[1]
   )) as ProblemWithRelations | null;
   const track = (await getTrackById(params.trackId[0])) as TracksType;
+  const session = await getServerSession(authOptions);
+
   let notionRecordMap;
   try {
     notionRecordMap = await notion.getPage(problem!.notionDocId);
@@ -29,7 +34,7 @@ export default async function Problem({
   }
 
   return (
-    <div>
+    <div className="relative">
       {problem == null ? (
         <div></div>
       ) : (
@@ -49,6 +54,7 @@ export default async function Problem({
               <McqRenderer recordMap={notionRecordMap} problem={problem} />
             )}
           </div>
+          {session.user?.id === track.autherId && <FloatingButtons problem={problem}/>}
         </div>
       )}
     </div>
