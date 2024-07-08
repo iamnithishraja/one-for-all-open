@@ -16,6 +16,7 @@ import {
   ReturnTypeUpdateProblem,
 } from "./types";
 import { createSafeAction } from "../../lib/createSafeAction";
+import { ProblemWithRelations } from "../../types/userTypes";
 
 async function validateUserAndTrack(userId: string, trackId: string) {
   const userDB = await prisma.user.findUnique({
@@ -44,8 +45,11 @@ async function createProblemHandler(
       return { error: "Unauthorized" };
     }
 
-    const validation = await validateUserAndTrack(session.user.id, data.trackId);
-    if ('error' in validation) {
+    const validation = await validateUserAndTrack(
+      session.user.id,
+      data.trackId
+    );
+    if ("error" in validation) {
       return validation;
     }
 
@@ -74,21 +78,23 @@ async function createProblemHandler(
         create: {
           programs: {
             createMany: {
-              data: data.programs?.map((program) => ({
-                boilerPlateCode: program.boilerPlateCode,
-                mainCode: program.mainCode,
-                correctCode: program.correctCode,
-                codeLaungageId: program.languageId,
-              })) ?? [],
+              data:
+                data.programs?.map((program) => ({
+                  boilerPlateCode: program.boilerPlateCode,
+                  mainCode: program.mainCode,
+                  correctCode: program.correctCode,
+                  codeLaungageId: program.languageId,
+                })) ?? [],
             },
           },
           testCases: {
             createMany: {
-              data: data.testCases?.map((testCase) => ({
-                input: testCase.input,
-                expectedOutput: testCase.expectedOutput,
-                hidden: testCase.hidden,
-              })) ?? [],
+              data:
+                data.testCases?.map((testCase) => ({
+                  input: testCase.input,
+                  expectedOutput: testCase.expectedOutput,
+                  hidden: testCase.hidden,
+                })) ?? [],
             },
           },
         },
@@ -105,7 +111,7 @@ async function createProblemHandler(
     const createdProblem = await prisma.problem.create({
       data: problemData,
     });
-    
+
     return { data: createdProblem };
   } catch (error: any) {
     console.error(error);
@@ -122,8 +128,11 @@ async function updateProblemHandler(
       return { error: "Unauthorized" };
     }
 
-    const validation = await validateUserAndTrack(session.user.id, data.trackId!);
-    if ('error' in validation) {
+    const validation = await validateUserAndTrack(
+      session.user.id,
+      data.trackId!
+    );
+    if ("error" in validation) {
       return validation;
     }
 
@@ -135,47 +144,54 @@ async function updateProblemHandler(
       sortingOrder: data.sortingOrder,
     };
 
-    if (data.type !== "Blog") {
+    if (data.type !== "Blog" && data.score !== undefined) {
+      await prisma.quizScore.deleteMany({
+        where: { problemId: data.id, userId: session.user.id },
+      });
       updateData.QuizScore = {
-        upsert: {
-          create: { score: data.score ?? 0, userId: session.user.id },
-          update: { score: data.score },
-        },
+        create: { score: data.score, userId: session.user.id },
       };
     }
 
     if (data.type === "Code") {
+      await prisma.$transaction([
+        prisma.testCase.deleteMany({
+          where: { problemStatement: { problemId: data.id } },
+        }),
+        prisma.program.deleteMany({
+          where: { problemStatement: { problemId: data.id } },
+        }),
+        prisma.problemStatement.deleteMany({ where: { problemId: data.id } }),
+      ]);
+
       updateData.problemStatement = {
-        upsert: {
-          create: {
-            programs: { createMany: { data: data.programs ?? [] } },
-            testCases: { createMany: { data: data.testCases ?? [] } },
-          },
-          update: {
-            programs: {
-              deleteMany: {},
-              createMany: { data: data.programs ?? [] },
+        create: {
+          programs: {
+            createMany: {
+              data:
+                data.programs?.map((pGram) => ({
+                  mainCode: pGram.mainCode,
+                  boilerPlateCode: pGram.boilerPlateCode,
+                  correctCode: pGram.correctCode,
+                  codeLaungageId: pGram.languageId,
+                })) ?? [],
             },
-            testCases: {
-              deleteMany: {},
-              createMany: { data: data.testCases ?? [] },
+          },
+          testCases: {
+            createMany: {
+              data: data.testCases ?? [],
             },
           },
         },
       };
-    } else if (data.type === "MCQ") {
+    } else if (data.type === "MCQ" && data.mcqQuestion) {
+      await prisma.mCQQuestion.deleteMany({ where: { problemId: data.id } });
+
       updateData.MCQQuestion = {
-        upsert: {
-          create: {
-            question: data.mcqQuestion?.question ?? "",
-            options: data.mcqQuestion?.options ?? [],
-            correctOption: data.mcqQuestion?.correctOption ?? "",
-          },
-          update: {
-            question: data.mcqQuestion?.question,
-            options: data.mcqQuestion?.options,
-            correctOption: data.mcqQuestion?.correctOption,
-          },
+        create: {
+          question: data.mcqQuestion.question,
+          options: data.mcqQuestion.options,
+          correctOption: data.mcqQuestion.correctOption,
         },
       };
     }
@@ -187,7 +203,7 @@ async function updateProblemHandler(
 
     return { data: updatedProblem };
   } catch (error: any) {
-    console.error(error);
+    console.log(error);
     return { error: error.message || "Failed to update problem" };
   }
 }
@@ -201,8 +217,11 @@ async function deleteProblemHandler(
       return { error: "Unauthorized" };
     }
 
-    const validation = await validateUserAndTrack(session.user.id, data.trackId);
-    if ('error' in validation) {
+    const validation = await validateUserAndTrack(
+      session.user.id,
+      data.trackId
+    );
+    if ("error" in validation) {
       return validation;
     }
 
@@ -270,10 +289,46 @@ export const getAllProblems = async (id: string) => {
           semister: userDb.semister,
         },
       },
+      orderBy: {
+        sortingOrder: "asc",
+      },
+    });
+
+    return { data: problems };
+  } catch (error: any) {
+    console.error(error);
+    return { error: "Unable to Fetch Problems" };
+  }
+};
+
+export const getProblemById = async (id: string) => {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const userDb = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { collegeId: true, semister: true },
+    });
+
+    if (!userDb?.collegeId || !userDb.semister) {
+      return { error: "Unauthorized" };
+    }
+
+    const problem = await prisma.problem.findUnique({
+      where: {
+        id: id,
+      },
       include: {
         problemStatement: {
           include: {
-            programs: true,
+            programs: {
+              include: {
+                codeLaungage: true,
+              },
+            },
             testCases: { where: { hidden: false } },
           },
         },
@@ -282,7 +337,7 @@ export const getAllProblems = async (id: string) => {
       },
     });
 
-    return { data: problems };
+    return problem;
   } catch (error: any) {
     console.error(error);
     return { error: "Unable to Fetch Problems" };
@@ -304,6 +359,40 @@ export const getAllCodeLanguage = async () => {
   }
 };
 
-export const createProblem = createSafeAction(createProblemSchema, createProblemHandler);
-export const updateProblem = createSafeAction(updateProblemSchema, updateProblemHandler);
-export const deleteProblem = createSafeAction(deleteProblemSchema, deleteProblemHandler);
+export const getAllTestCasesByProblemStatementId = async (
+  problemStatementId: string,
+  trackId: string
+) => {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const validation = await validateUserAndTrack(session.user.id, trackId);
+    if ("error" in validation) {
+      return { error: validation.error };
+    }
+    const testCases = await prisma.testCase.findMany({
+      where: {
+        problemStatementId: problemStatementId,
+      },
+    });
+    return testCases;
+  } catch (error) {
+    return { error: "Failed to get all languages" };
+  }
+};
+
+export const createProblem = createSafeAction(
+  createProblemSchema,
+  createProblemHandler
+);
+export const updateProblem = createSafeAction(
+  updateProblemSchema,
+  updateProblemHandler
+);
+export const deleteProblem = createSafeAction(
+  deleteProblemSchema,
+  deleteProblemHandler
+);

@@ -8,29 +8,23 @@ import {
   problemAtom,
   testCases,
 } from "../atoms/adminAtoms";
-import { CodeLanguageType, ProblemType } from "@repo/db/client";
+import { CodeLanguageType, ProblemType, TestCaseType } from "@repo/db/client";
 import { Label, Input, TextArea, Button } from "@repo/ui";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProblemStatementForm from "./ProblemStatementForm";
 import Mcq from "./McqForm";
-import { getAllCodeLanguage } from "../actions/problem";
+import {
+  getAllCodeLanguage,
+  getAllTestCasesByProblemStatementId,
+} from "../actions/problem";
 import TestCaseForm from "./TestCaseForm";
 import { Plus } from "lucide-react";
 import { useAction } from "../hooks/useAction";
 import { createProblem, updateProblem } from "../actions/problem/index";
 import { useRouter } from "next/navigation";
-import { createProblemSchema } from "../actions/problem/schema";
-
-function generateBase62Id(length = 10) {
-  const characters =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-}
+import { createProblemSchema, updateProblemSchema } from "../actions/problem/schema";
+import { generateBase62Id } from "../lib/utils";
 
 const CreateProblemForm = () => {
   const [problem, setProblem] = useRecoilState(problemAtom);
@@ -91,21 +85,45 @@ const CreateProblemForm = () => {
     ]);
   };
 
-  async function fetchAllCodeLanguages() {
+  async function fetchAllData() {
     const res = await getAllCodeLanguage();
 
     if (res.data) {
-      setAvailableLanguages(res.data);
+      const newAvailableLanguages = res.data.filter(
+        (language) =>
+          !currentCodeLanguages.some(
+            (currentLanguage) => currentLanguage.id === language.id
+          )
+      );
+      setAvailableLanguages(newAvailableLanguages);
+    }
+    if (problem.isUpdating && problem.type === ProblemType.Code) {
+      const reqTestcases = await getAllTestCasesByProblemStatementId(
+        problem.problemStatementId,
+        problem.trackId
+      );
+      if (!("error" in reqTestcases)) {
+        setTestCases(
+          reqTestcases.map((tcase) => ({
+            hidden: tcase.hidden,
+            expectedOutput: tcase.expectedOutput,
+            input: tcase.input,
+            id: tcase.id,
+          }))
+        );
+      }
     }
   }
 
   useEffect(() => {
-    setProblem((prevVal: any) => ({
-      ...prevVal,
-      trackId: params.trackId,
-      type: prevVal.type ?? ProblemType.Blog,
-    }));
-    fetchAllCodeLanguages();
+    if (!problem.isUpdating) {
+      setProblem((prevVal: any) => ({
+        ...prevVal,
+        trackId: params.trackId,
+        type: prevVal.type ?? ProblemType.Blog,
+      }));
+    }
+    fetchAllData();
   }, []);
 
   const addLanguage = (lang: CodeLanguageType) => {
@@ -126,11 +144,10 @@ const CreateProblemForm = () => {
     setTestCases((prev) => prev.filter((testcase) => testcase.id !== id));
   };
 
-  const editProblem = () => {};
-  const addProblem = () => {
+  const editProblem = () => {
     try {
       let subProblem = undefined;
-      
+
       if (problem.type == ProblemType.Code) {
         subProblem = {
           programs: submissionPgrams,
@@ -145,7 +162,47 @@ const CreateProblemForm = () => {
           },
         };
       }
-      if (problem.type == ProblemType.Code && currentCodeLanguages.length === 0) {
+      if (
+        problem.type == ProblemType.Code &&
+        currentCodeLanguages.length === 0
+      ) {
+        // show tost message to select at least 1 programming language
+        return;
+      }
+      const finalProblem = {
+        ...problem,
+        ...subProblem,
+      };
+
+      updateProblemSchema.parse(finalProblem);
+      executeUpdate(finalProblem);
+    } catch (e) {
+      // TODO: show toast fill all required fields
+      console.log(e);
+    }
+  };
+  const addProblem = () => {
+    try {
+      let subProblem = undefined;
+
+      if (problem.type == ProblemType.Code) {
+        subProblem = {
+          programs: submissionPgrams,
+          testCases: submissionTcases,
+        };
+      } else if (problem.type == ProblemType.MCQ) {
+        subProblem = {
+          mcqQuestion: {
+            question: submissionMcq.question,
+            options: submissionMcq.options,
+            correctOption: submissionMcq.correctOption,
+          },
+        };
+      }
+      if (
+        problem.type == ProblemType.Code &&
+        currentCodeLanguages.length === 0
+      ) {
         // show tost message to select at least 1 programming language
         return;
       }

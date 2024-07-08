@@ -1,98 +1,117 @@
 "use client";
 import { signIn, useSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-
-import { Button } from "@repo/ui";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@repo/ui";
-import { Input } from "@repo/ui";
-import { Label } from "@repo/ui";
 
 const Signin = () => {
-	const session = useSession();
-	const router = useRouter();
-	const redirected = useRef(false);
-	useEffect(() => {
-		if (redirected.current === false && session.data?.user) {
-			const redirectUrl = localStorage.getItem("loginRedirectUrl");
-			localStorage.removeItem("loginRedirectUrl");
-			router.replace(redirectUrl || "/");
-			redirected.current = true;
-		}
-	}, [redirected, session, router]);
+  const session = useSession();
+  const router = useRouter();
+  const redirected = useRef(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-	return (
-		<div className="flex justify-center items-center min-h-screen">  
-			<Card className="mx-auto max-w-sm p-4">
-				<CardHeader>
-					<CardTitle className="text-xl">Sign in</CardTitle>
-					<CardDescription>
-						Enter your information to create an account
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="grid gap-4">
-						<div className="grid grid-cols-2 gap-4">
-							<div className="grid gap-2">
-								<Label htmlFor="first-name">First name</Label>
-								<Input id="first-name" placeholder="Max" required />
-							</div>
-							<div className="grid gap-2">
-								<Label htmlFor="last-name">Last name</Label>
-								<Input
-									id="last-name"
-									placeholder="Robinson"
-									required
-								/>
-							</div>
-						</div>
-						<div className="grid gap-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="m@example.com"
-								required
-							/>
-						</div>
-						<div className="grid gap-2">
-							<Label htmlFor="password">Password</Label>
-							<Input id="password" type="password" />
-						</div>
-						<Button
-							type="submit"
-							className="w-full"
-							onClick={async () => {
-								await signIn("credentials", {
-									name: "string",
-									email: "string",
-									password: "string",
-								});
-							}}
-						>
-							Sign in
-						</Button>
-						<Button
-							variant="outline"
-							className="w-full"
-							onClick={async () => {
-								await signIn("google");
-							}}
-						>
-							Sign in with Google
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
-		</div>
-	);
+  useEffect(() => {
+    if (redirected.current === false && session.data?.user) {
+      const redirectUrl = localStorage.getItem("loginRedirectUrl");
+      localStorage.removeItem("loginRedirectUrl");
+      router.replace(redirectUrl || "/");
+      redirected.current = true;
+    }
+  }, [redirected, session, router]);
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    if (isSignUp) {
+      await signIn("credentials", { name, email, password });
+    } else {
+      await signIn("credentials", { email, password });
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    await signIn("google");
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-background text-foreground">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-md">
+        <h2 className="text-3xl font-bold text-center">
+          {isSignUp ? "Sign up" : "Sign in"}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {isSignUp && (
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium">
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                required
+                className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              className="mt-1 block w-full px-3 py-2 bg-background border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              {isSignUp ? "Sign up" : "Sign in"}
+            </button>
+          </div>
+        </form>
+        <div>
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          >
+            Sign in with Google
+          </button>
+        </div>
+        <div className="text-center">
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-primary hover:underline focus:outline-none"
+          >
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Signin;

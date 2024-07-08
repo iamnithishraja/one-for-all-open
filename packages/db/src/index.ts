@@ -11,6 +11,8 @@ import {
   CodeLanguage,
   TestCase,
   MCQQuestion,
+  QuizScore,
+  ProblemStatement
 } from "@prisma/client";
 
 const prismaClientSingleton = () => {
@@ -39,4 +41,6 @@ export type ProgramType = Program;
 export type CodeLanguageType = CodeLanguage;
 export type TestCaseType = TestCase;
 export type McqType = MCQQuestion;
+export type QuizScoreType = QuizScore;
+export type ProblemStatementType = ProblemStatement;
 export { ProblemType, Semister };

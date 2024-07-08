@@ -112,7 +112,7 @@ model Program {
     boilerPlateCode  String
     mainCode         String
     correctCode      String
-    problemId        String           @unique
+    problemId        String
     problemStatement ProblemStatement @relation(fields: [problemId], references: [id], onDelete: Cascade)
     codeLaungageId   Int              @unique
     codeLaungage     CodeLanguage     @relation(fields: [codeLaungageId], references: [id], onDelete: Cascade)
