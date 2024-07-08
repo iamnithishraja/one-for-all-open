@@ -16,7 +16,6 @@ import {
   ReturnTypeUpdateProblem,
 } from "./types";
 import { createSafeAction } from "../../lib/createSafeAction";
-import { ProblemWithRelations } from "../../types/userTypes";
 
 async function validateUserAndTrack(userId: string, trackId: string) {
   const userDB = await prisma.user.findUnique({
@@ -224,7 +223,15 @@ async function deleteProblemHandler(
     if ("error" in validation) {
       return validation;
     }
-
+    await prisma.$transaction([
+      prisma.testCase.deleteMany({
+        where: { problemStatement: { problemId: data.id } },
+      }),
+      prisma.program.deleteMany({
+        where: { problemStatement: { problemId: data.id } },
+      }),
+      prisma.problemStatement.deleteMany({ where: { problemId: data.id } }),
+    ]);
     const deletedProblem = await prisma.problem.delete({
       where: { id: data.id },
     });

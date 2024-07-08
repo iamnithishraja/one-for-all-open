@@ -98,7 +98,7 @@ export default ({
           dragMomentum={false}
           dragElastic={0}
           onDrag={handleDrag}
-          className="w-1 bg-border cursor-col-resize hover:bg-primary flex-shrink-0"
+          className="z-40 w-1 cursor-col-resize hover:bg-primary flex-shrink-0"
         />
 
         <div
@@ -142,15 +142,21 @@ export default ({
                 <label className="block text-sm font-medium mb-1">Input:</label>
                 <textarea
                   value={selectedTestcase.input}
-                  onChange={(e) =>
-                    setTestcases(
-                      testcases.map((t) =>
-                        t.id === selectedTestcase.id && t.isEditable
-                          ? { ...t, input: e.target.value }
-                          : t
-                      )
-                    )
-                  }
+                  onChange={(e) => {
+                    setTestcases((prevVal) => {
+                      prevVal[prevVal.length - 1] = {
+                        ...prevVal[prevVal.length - 1],
+                        input: e.target.value,
+                      };
+                      return [...prevVal];
+                    });
+                    setSelectedTestcase((prevVal) => ({
+                      ...prevVal,
+                      input: e.target.value,
+                    }));
+                    console.log(testcases);
+                    
+                  }}
                   className="w-full h-24 bg-input text-foreground border rounded-md p-2"
                   readOnly={!selectedTestcase.isEditable}
                 />
@@ -196,10 +202,12 @@ export default ({
                   (lang) => lang.id === Number(e.target.value)
                 )!
               );
-              setProgram((prevVal) => ({
-                ...prevVal,
+              setProgram({
+                code: problem.problemStatement?.programs.find(
+                  (prog) => prog.codeLaungageId === Number(e.target.value)
+                )!.boilerPlateCode!,
                 languageId: selectedLanguage.id,
-              }));
+              });
             }}
             className={
               " w-1/2 bg-input text-foreground border-2 rounded-md transition-all duration-200"

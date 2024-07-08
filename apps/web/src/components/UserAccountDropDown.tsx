@@ -7,11 +7,12 @@ import UserImage from "./UserImage";
 import { useState } from "react";
 
 const dropDownData = [
-  {
-    name: "Profile",
-    icon: <UserRound size={15} />,
-    href: "/profile",
-  },
+  {}
+  // {
+  //   name: "Profile",
+  //   icon: <UserRound size={15} />,
+  //   href: "/profile",
+  // },
 ];
 
 export default function UserAccountDropDown() {
@@ -59,7 +60,7 @@ export default function UserAccountDropDown() {
               </div>
               <hr className="border-border" />
 
-              {dropDownData.map((item, index) => (
+              {/* {dropDownData.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -71,7 +72,7 @@ export default function UserAccountDropDown() {
                   {item.icon}
                   {item.name}
                 </button>
-              ))}
+              ))} */}
               <hr className="border-border" />
               <button
                 onClick={handleSignOut}

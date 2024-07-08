@@ -31,7 +31,7 @@ const DeleteButton = ({ id, trackId }: { id: string; trackId: string }) => {
   return (
     <>
       <button
-        className="rounded-full bg-background shadow-lg p-3 hover:bg-accent transition-colors duration-200"
+        className="rounded-full bg-background shadow-lg p-3 hover:bg-accent transition-colors duration-200 border border-foreground/40"
         onClick={() => setShowDeleteModal(true)}
       >
         <Trash2 className="h-4 w-4 text-foreground" />
@@ -85,7 +85,7 @@ const FloatingButtons = ({ problem }: { problem: ProblemWithRelations }) => {
       <Button
         variant="outline"
         size="icon"
-        className="rounded-full bg-background shadow-lg p-3"
+        className="rounded-full bg-background shadow-lg p-3 border border-foreground/40"
         onClick={() => {
           setProblemAtom({
             id: problem.id,

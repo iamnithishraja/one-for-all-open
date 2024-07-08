@@ -1,4 +1,3 @@
-import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
@@ -35,6 +34,7 @@ export const authOptions = {
       },
       async authorize(credentials: any, req) {
         try {
+          console.log(credentials);
           const hashedPassword = await bcrypt.hash(credentials.password, 10);
           const userDb = await prisma.user.findUnique({
             where: {
@@ -103,7 +103,7 @@ export const authOptions = {
             };
           }
         } catch (e) {
-          console.error(e);
+          console.log(e);
         }
         return null;
       },
@@ -145,6 +145,7 @@ export const authOptions = {
           image: userDb.image,
         };
       }
+      return true;
     },
     async session({ session, token }: any) {
       const user = await prisma.user.findUnique({

@@ -1,11 +1,9 @@
 "use server";
-
-import prismaClient from "@repo/db/client"
+import prismaClient from "@repo/db/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../lib/auth";
 
-export async function getCollege(
-) {
+export async function getCollege() {
   try {
     const session = await getServerSession(authOptions);
 

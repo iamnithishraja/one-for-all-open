@@ -9,7 +9,7 @@ const CodeEditor = ({ lang }: { lang: string }) => {
   return (
     <div>
       <Editor
-        height={"55vh"}
+        height={"57vh"}
         value={program.code}
         theme="vs-dark"
         options={{

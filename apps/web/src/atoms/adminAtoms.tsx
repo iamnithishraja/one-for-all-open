@@ -22,7 +22,7 @@ export const mcqAtom = atom<Partial<McqType>>({
 });
 
 export const programs = atom<Partial<ProgramType>[]>({
-  key: "programAtom",
+  key: "programsAtom",
   default: [],
 });
 
@@ -32,7 +32,7 @@ export const testCases = atom<Partial<TestCaseType>[]>({
 });
 
 export const programsAtom = atomFamily({
-  key: "programsAtom",
+  key: "admin/programAtom",
   default: selectorFamily({
     key: "programsSelector",
     get:

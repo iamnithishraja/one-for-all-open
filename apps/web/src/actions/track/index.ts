@@ -16,6 +16,8 @@ import {
   UpdateTrackSchema,
 } from "./schema";
 import { createSafeAction } from "../../lib/createSafeAction";
+import { deleteProblem } from "../problem";
+import { promise } from "zod";
 
 export async function getAllSubjectsByCollege(
   courseId: string,
@@ -255,6 +257,16 @@ async function deleteTrackHandler(
     ) {
       return { error: "Unauthorized or insufficient permissions" };
     }
+    const problems = await prismaClient.problem.findMany({
+      where: {
+        trackId: data.id,
+      },
+    });
+    await Promise.all(
+      problems.map(async (problem) => {
+        await deleteProblem({ id: problem.id, trackId: data.id });
+      })
+    );
     const deletedTrack = await prismaClient.track.delete({
       where: {
         id: data.id,
