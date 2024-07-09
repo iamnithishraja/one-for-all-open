@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: judge0-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: judge0-redis
+  template:
+    metadata:
+      labels:
+        app: judge0-redis
+    spec:
+      containers:
+      - name: judge0-redis
+        image: redis:7.2.4
+        envFrom:
+        - configMapRef:
+            name: judge0-config
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: judge0-secrets
+              key: REDIS_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: judge0-redis
+spec:
+  selector:
+    app: judge0-redis
+  ports:
+    - port: 6379

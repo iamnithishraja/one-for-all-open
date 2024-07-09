@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: judge0-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: judge0-server
+  template:
+    metadata:
+      labels:
+        app: judge0-server
+    spec:
+      containers:
+        - name: judge0-server
+          image: judge0/judge0:1.13.1
+          envFrom:
+            - configMapRef:
+                name: judge0-config
+          ports:
+            - containerPort: 2358
+            - containerPort: 3001
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: judge0-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: judge0-secrets
+                  key: REDIS_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: judge0-server-service
+spec:
+  selector:
+    app: judge0-server
+  ports:
+    - protocol: TCP
+      port: 2358
+      targetPort: 2358
+  type: LoadBalancer
