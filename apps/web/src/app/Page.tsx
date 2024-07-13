@@ -1,23 +1,16 @@
-"use server";
 import { SubjectType } from "@repo/db/client";
-import { getAllSubjectsByCollegeAndSem, getTracks } from "../actions/track";
-import { Appbar } from "../components/app-bar/AppBar";
+import { redirect } from "next/navigation";
 import { getCollege } from "../actions/college";
+import { getTracks, getAllSubjectsByCollegeAndSem } from "../actions/track";
+import { Appbar } from "../components/app-bar/AppBar";
 import { Subjects } from "../components/subjects";
 import { Tracks } from "../components/Tracks";
 import { TracksType } from "../types/userTypes";
-import { redirect } from "next/navigation";
-import Dropdown from "../components/Dropdown";
-import { getCourseByCollege } from "../actions/course";
-import { getSemester } from "../actions/semester";
 
 export default async function Page(): Promise<JSX.Element> {
-	const colleges: any = await getCollege();
-	const courses: any = await getCourseByCollege();
-	const semesters: any = await getSemester();
-
-	const subjects: any = await getAllSubjectsByCollegeAndSem();
 	const tracks: any = await getTracks();
+	const subjects: any = await getAllSubjectsByCollegeAndSem();
+	const colleges: any = await getCollege();
 
 	if (subjects.error === "user not logged in") {
 		redirect("/auth");
@@ -33,17 +26,13 @@ export default async function Page(): Promise<JSX.Element> {
 			</div>
 			{subjects.error || tracks.error ? (
 				<div className="grid gap-16">
-					<Dropdown items={colleges} type="College" />
-					{false ? (
-						<Dropdown items={courses} type="Course" />
-					) : (
-						 <div></div>
-					)}
-					{false ? (
-						<Dropdown items={semesters} type="Semester" />
-					) : (
-						<div></div>
-					)}
+					<select name="College" id="college">
+						<h1>{colleges.id}</h1>
+						<option value="">Select College</option>
+						{colleges.map((college: any) => (
+							<option value={college.id}>{college.name}</option>
+						))}
+					</select>
 				</div>
 			) : (
 				<div>
