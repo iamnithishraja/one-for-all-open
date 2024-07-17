@@ -63,6 +63,8 @@ export async function getAllSubjectsByCollegeAndSem(): Promise<
         id: session.user.id,
       },
     });
+    
+
     if (!userDB?.collegeId || !userDB.semister || !userDB.courseId) {
       return { error: "Unauthorized or insufficient permissions" };
     }
