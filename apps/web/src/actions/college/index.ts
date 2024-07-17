@@ -1,5 +1,5 @@
 "use server";
-import prismaClient from "@repo/db/client";
+import prismaClient, { Semister } from "@repo/db/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../lib/auth";
 
@@ -18,65 +18,77 @@ export async function getCollege() {
   }
 }
 
-export async function getSemester() {
-	try {
-		const session = await getServerSession(authOptions);
+export async function getCourseByCollege(id: string) {
+  try {
+    const session = await getServerSession(authOptions);
 
-		if (!session || !session.user) {
-			return { error: "user not logged in" };
-		}
+    if (!session || !session.user) {
+      return { error: "user not logged in" };
+    }
 
-		const userDB = await prismaClient.user.findUnique({
-			where: {
-				id: session.user.id,
-			},
-		});
+    const userDB = await prismaClient.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
 
-		if (!userDB?.collegeId || !userDB.courseId) {
-			return { error: "Unauthorized or insufficient permissions" };
-		}
+    if (!userDB) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
 
-		const semesters = Object.keys(Semister).map((key) => {
-			return { name: key };
-		});
-		
+    const courses = await prismaClient.course.findMany({
+      where: {
+        colleges: {
+          some: {
+            id: id,
+          },
+        },
+      },
+    });
 
-		return semesters;
-	} catch (error: any) {
-		return { error: error.message || "Failed to get semesters." };
-	}
+    return courses;
+  } catch (error: any) {
+    return { error: error.message || "Failed to get courses." };
+  }
 }
 
-export async function getCourseByCollege() {
-	try {
-		const session = await getServerSession(authOptions);
+export async function setProfile({
+  collegeId,
+  courseId,
+  sem,
+}: {
+  collegeId: string;
+  courseId: string;
+  sem: Semister;
+}) {
+  try {
+    const session = await getServerSession(authOptions);
 
-		if (!session || !session.user) {
+    if (!session || !session.user) {
       return { error: "user not logged in" };
-		}
-      
-		const userDB = await prismaClient.user.findUnique({
-			where: {
-				id: session.user.id,
-			},
-		});
+    }
 
-		if (!userDB?.collegeId) {
-			return { error: "Unauthorized or insufficient permissions" };
-		}
+    const userDB = await prismaClient.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
 
-		const courses = await prismaClient.course.findMany({
-			where: {
-				colleges: {
-					some: {
-						id: userDB.collegeID,
-					},
-				},
-			},
-		});
-
-		return courses;
-	} catch (error: any) {
-		return { error: error.message || "Failed to get semesters." };
-	}
+    if (!userDB) {
+      return { error: "Unauthorized or insufficient permissions" };
+    }
+    const user = await prismaClient.user.update({
+      where: {
+        id: userDB.id,
+      },
+      data: {
+        collegeId: collegeId,
+        courseId: courseId,
+        semister: sem,
+      },
+    });
+    return { data: user };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update user" };
+  }
 }
