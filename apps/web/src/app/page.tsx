@@ -30,9 +30,7 @@ export default async function Page(): Promise<JSX.Element> {
         </div>
       </div>
       {subjects.error || tracks.error ? (
-        <div className="grid gap-16">
           <Dropdown colleges={colleges} />
-        </div>
       ) : (
         <div>
           <Subjects
