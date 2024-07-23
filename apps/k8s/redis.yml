@@ -15,6 +15,10 @@ spec:
       containers:
       - name: judge0-redis
         image: redis:7.2.4
+        command: [
+          "bash", "-c",
+          'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"'
+        ]
         envFrom:
         - configMapRef:
             name: judge0-config

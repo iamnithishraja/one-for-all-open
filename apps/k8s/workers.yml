@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: judge0-workers
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: judge0-worker
@@ -15,12 +15,10 @@ spec:
       containers:
         - name: judge0-worker
           image: judge0/judge0:1.13.1
-          command: ["./scripts/workers"]
-          # resources:
-          #   requests:
-          #     cpu: "100m"
-          #   limits:
-          #     cpu: "1000m"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ./scripts/workers
           envFrom:
             - configMapRef:
                 name: judge0-config
@@ -30,25 +28,31 @@ spec:
                 secretKeyRef:
                   name: judge0-secrets
                   key: REDIS_PASSWORD
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: judge0-secrets
+                  key: POSTGRES_PASSWORD
           securityContext:
-            privileged: true
+            runAsUser: 1000
+            runAsGroup: 1000
+      hostPID: true
+      hostIPC: true
 
----
-
-# apiVersion: keda.sh/v1alpha1
-# kind: ScaledObject
-# metadata:
-#   name: judge0-workers-scaler
-# spec:
-#   scaleTargetRef:
-#     name: judge0-workers
-#   pollingInterval: 5
-#   cooldownPeriod: 30
-#   minReplicaCount: 1
-#   maxReplicaCount: 10
-#   triggers:
-#   - type: redis
-#     metadata:
-#       address: REDIS_HOST:6379 
-#       listName: resque
-#       listLength: "1"
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: judge0-workers-scaler
+spec:
+  scaleTargetRef:
+    name: judge0-workers
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: redis
+    metadata:
+      address: REDIS_HOST:6379 
+      listName: resque
+      listLength: "1"
