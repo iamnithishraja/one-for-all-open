@@ -12,7 +12,8 @@ import {
   TestCase,
   MCQQuestion,
   QuizScore,
-  ProblemStatement
+  ProblemStatement,
+  Submission,
 } from "@prisma/client";
 
 const prismaClientSingleton = () => {
@@ -43,4 +44,5 @@ export type TestCaseType = TestCase;
 export type McqType = MCQQuestion;
 export type QuizScoreType = QuizScore;
 export type ProblemStatementType = ProblemStatement;
+export type SubmissionType = Submission;
 export { ProblemType, Semister };

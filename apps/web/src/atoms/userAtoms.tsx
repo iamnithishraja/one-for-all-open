@@ -15,6 +15,6 @@ export const programAtom = atom({
   key: "programAtom",
   default: {
     languageId: 13,
-    code: "",
+    code: ``,
   },
 });

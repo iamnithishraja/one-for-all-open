@@ -9,6 +9,12 @@ import CodeEditor from "../CodeEditor";
 import { CodeLanguageType, TestCaseType } from "@repo/db/client";
 import { useRecoilState } from "recoil";
 import { programAtom } from "../../atoms/userAtoms";
+import { useAction } from "../../hooks/useAction";
+import { didUserSolve, submitProblem } from "../../actions/code";
+import LoadingSpinner from "../LoadingSpinner";
+import ResultModal from "../resultModal";
+import { Check } from "lucide-react";
+import { SubmissionTab } from "../SubmissionsPage";
 
 export default ({
   recordMap,
@@ -21,6 +27,7 @@ export default ({
   const dragControls = useDragControls();
   const [isExcalidrawOpen, setIsExcalidrawOpen] = useState(false);
   const [isExcalidrawMaximized, setIsExcalidrawMaximized] = useState(false);
+  const [activeTab, setActiveTab] = useState("problem");
   const [availableLanguages, setAvailableLanguages] = useState<
     CodeLanguageType[]
   >(problem.problemStatement?.programs!.map((pGram) => pGram.codeLaungage)!);
@@ -28,6 +35,7 @@ export default ({
     availableLanguages[0]
   );
   const [program, setProgram] = useRecoilState(programAtom);
+  const [isLoading, setIsLoading] = useState(false);
   const [testcases, setTestcases] = useState([
     ...problem.problemStatement!.testCases!.map((tCase) => ({
       id: tCase.id,
@@ -43,6 +51,34 @@ export default ({
     },
   ]);
   const [selectedTestcase, setSelectedTestcase] = useState(testcases[0]);
+  const [showResult, setShowResult] = useState(false);
+  const [alreadySolved, setAlredySolved] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState({
+    isSuccess: false,
+    totalTestCases: 0,
+    passedTestCases: 0,
+  });
+  const { execute, fieldErrors } = useAction(submitProblem, {
+    onSuccess: (data) => {
+      // TODO: show success toast
+      console.log("abc", data);
+      setSubmissionResult({
+        isSuccess: data.testCasesPassed === data.totalTestCases,
+        totalTestCases: data.totalTestCases,
+        passedTestCases: data.testCasesPassed,
+      });
+      setShowResult(true);
+    },
+    onError: (error) => {
+      // TODO: show failure toast
+      setSubmissionResult({
+        isSuccess: false,
+        totalTestCases: 0,
+        passedTestCases: 0,
+      });
+      setShowResult(true);
+    },
+  });
 
   const handleDrag = (event: any, info: any) => {
     const containerWidth = window.innerWidth;
@@ -66,8 +102,21 @@ export default ({
     setIsExcalidrawMaximized(!isExcalidrawMaximized);
   };
 
-  const handleSubmit = () => {
-    console.log("Submitting code");
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    try {
+      const response = await execute({
+        languageId: selectedLanguage.id,
+        problemStatementId: problem.problemStatement?.id!,
+        sourceCode: program.code,
+      });
+    } finally {
+      setIsLoading(false);
+      setShowResult(true);
+    }
+  };
+  const closeResultModal = () => {
+    setShowResult(false);
   };
 
   const handleTest = () => {
@@ -81,17 +130,69 @@ export default ({
         (pGram) => pGram.codeLaungageId === selectedLanguage.id
       )!.boilerPlateCode!,
     }));
+    didUserSolve(problem.problemStatement?.id!).then((data) => {
+      setAlredySolved(data.data ? data.data : false);
+    });
   }, []);
 
   return (
     <div className="relative h-screen overflow-hidden bg-background text-foreground">
-      <div className="flex h-full overflow-auto pb-12">
-        <div className="h-full bg-card" style={{ width: `${leftWidth}%` }}>
-          <div className="h-full overflow-y-auto pr-4">
-            <RenderNotion recordMap={recordMap} fullPage={true} />
+      {isLoading && <LoadingSpinner />}
+      {showResult && (
+        <ResultModal
+          isSuccess={submissionResult.isSuccess}
+          totalTestCases={submissionResult.totalTestCases}
+          passedTestCases={submissionResult.passedTestCases}
+          onClose={closeResultModal}
+        />
+      )}
+      <div className="flex h-full overflow-auto pb-2">
+        <div
+          className="h-full flex flex-col shadow-lg overflow-hidden"
+          style={{ width: `${leftWidth}%` }}
+        >
+          <div className="bg-secondary/70 px-4 py-2 flex items-center justify-between border-border mt-2 rounded-t-lg">
+            <div className="flex space-x-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setActiveTab("problem")}
+                className={`px-3 py-1 rounded-t-lg text-sm font-medium ${
+                  activeTab === "problem"
+                    ? "bg-card text-primary"
+                    : "text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                Problem
+              </button>
+              <button
+                onClick={() => setActiveTab("submissions")}
+                className={`px-3 py-1 rounded-t-lg text-sm font-medium ${
+                  activeTab === "submissions"
+                    ? "bg-card text-primary"
+                    : "text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                Submissions
+              </button>
+            </div>
+            <div className="w-16"></div>
           </div>
+          <div className="flex-grow overflow-hidden bg-card">
+            <div className="h-full overflow-y-auto p-4 border-l border-r border-border">
+              {activeTab === "problem" && (
+                <RenderNotion recordMap={recordMap} fullPage={true} />
+              )}
+              {activeTab === "submissions" && (
+                <SubmissionTab problemId={problem.problemStatement?.id!} />
+              )}
+            </div>
+          </div>
+          <div className="bg-secondary/70 h-6 border-t border-border rounded-b-lg"></div>
         </div>
-
         <motion.div
           drag="x"
           dragControls={dragControls}
@@ -154,8 +255,6 @@ export default ({
                       ...prevVal,
                       input: e.target.value,
                     }));
-                    console.log(testcases);
-                    
                   }}
                   className="w-full h-24 bg-input text-foreground border rounded-md p-2"
                   readOnly={!selectedTestcase.isEditable}
@@ -186,7 +285,7 @@ export default ({
       />
 
       <div className="absolute bottom-0 left-0 right-0 h-12 bg-card border-t border-border flex items-center justify-between px-4">
-        <div className="flex">
+        <div className="flex items-center">
           <Button
             onClick={toggleExcalidraw}
             className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 rounded text-sm mr-3"
@@ -209,9 +308,7 @@ export default ({
                 languageId: selectedLanguage.id,
               });
             }}
-            className={
-              " w-1/2 bg-input text-foreground border-2 rounded-md transition-all duration-200"
-            }
+            className="w-1/2 bg-input text-foreground border-2 rounded-md transition-all duration-200"
           >
             {availableLanguages.map((lang) => (
               <option key={lang.id} value={lang.id}>
@@ -220,6 +317,12 @@ export default ({
             ))}
           </select>
         </div>
+        {alreadySolved && (
+          <div className="flex items-center ml-3 text-green-500">
+            <Check size={20} />
+            <span className="ml-1 text-sm font-medium">Solved</span>
+          </div>
+        )}
         <div>
           <Button
             onClick={handleTest}

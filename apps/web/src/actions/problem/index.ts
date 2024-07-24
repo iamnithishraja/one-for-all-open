@@ -144,53 +144,79 @@ async function updateProblemHandler(
     };
 
     if (data.type !== "Blog" && data.score !== undefined) {
-      await prisma.quizScore.deleteMany({
-        where: { problemId: data.id, userId: session.user.id },
+      await prisma.quizScore.upsert({
+        where: {
+          problemId: data.id,
+          userId: session.user.id,
+        },
+
+        update: { score: data.score },
+        create: {
+          score: data.score,
+          userId: session.user.id,
+          problemId: data.id,
+        },
       });
-      updateData.QuizScore = {
-        create: { score: data.score, userId: session.user.id },
-      };
     }
 
     if (data.type === "Code") {
-      await prisma.$transaction([
-        prisma.testCase.deleteMany({
-          where: { problemStatement: { problemId: data.id } },
-        }),
-        prisma.program.deleteMany({
-          where: { problemStatement: { problemId: data.id } },
-        }),
-        prisma.problemStatement.deleteMany({ where: { problemId: data.id } }),
-      ]);
-
       updateData.problemStatement = {
-        create: {
-          programs: {
-            createMany: {
-              data:
-                data.programs?.map((pGram) => ({
-                  mainCode: pGram.mainCode,
-                  boilerPlateCode: pGram.boilerPlateCode,
-                  correctCode: pGram.correctCode,
-                  codeLaungageId: pGram.languageId,
-                })) ?? [],
+        upsert: {
+          where: { problemId: data.id },
+          update: {
+            programs: {
+              deleteMany: {},
+              createMany: {
+                data:
+                  data.programs?.map((pGram) => ({
+                    mainCode: pGram.mainCode,
+                    boilerPlateCode: pGram.boilerPlateCode,
+                    correctCode: pGram.correctCode,
+                    codeLaungageId: pGram.languageId,
+                  })) ?? [],
+              },
+            },
+            testCases: {
+              deleteMany: {},
+              createMany: {
+                data: data.testCases ?? [],
+              },
             },
           },
-          testCases: {
-            createMany: {
-              data: data.testCases ?? [],
+          create: {
+            programs: {
+              createMany: {
+                data:
+                  data.programs?.map((pGram) => ({
+                    mainCode: pGram.mainCode,
+                    boilerPlateCode: pGram.boilerPlateCode,
+                    correctCode: pGram.correctCode,
+                    codeLaungageId: pGram.languageId,
+                  })) ?? [],
+              },
+            },
+            testCases: {
+              createMany: {
+                data: data.testCases ?? [],
+              },
             },
           },
         },
       };
     } else if (data.type === "MCQ" && data.mcqQuestion) {
-      await prisma.mCQQuestion.deleteMany({ where: { problemId: data.id } });
-
       updateData.MCQQuestion = {
-        create: {
-          question: data.mcqQuestion.question,
-          options: data.mcqQuestion.options,
-          correctOption: data.mcqQuestion.correctOption,
+        upsert: {
+          where: { problemId: data.id },
+          update: {
+            question: data.mcqQuestion.question,
+            options: data.mcqQuestion.options,
+            correctOption: data.mcqQuestion.correctOption,
+          },
+          create: {
+            question: data.mcqQuestion.question,
+            options: data.mcqQuestion.options,
+            correctOption: data.mcqQuestion.correctOption,
+          },
         },
       };
     }
@@ -206,7 +232,6 @@ async function updateProblemHandler(
     return { error: error.message || "Failed to update problem" };
   }
 }
-
 async function deleteProblemHandler(
   data: InputTypeDeleteProblem
 ): Promise<ReturnTypeDeleteProblem> {

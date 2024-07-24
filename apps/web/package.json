@@ -15,7 +15,9 @@
     "@repo/ui": "*",
     "@types/bcrypt": "^5.0.2",
     "@types/prismjs": "^1.26.4",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "bcrypt": "^5.1.1",
+    "date-fns": "^3.6.0",
     "framer-motion": "^11.2.13",
     "next": "^14.2.3",
     "next-auth": "^4.24.7",
@@ -27,6 +29,8 @@
     "react-dom": "^18.2.0",
     "react-notion-x": "^6.16.0",
     "react-pdf": "^9.1.0",
+    "react-syntax-highlighter": "^15.5.0",
+    "react-syntax-highlighter-virtualized-renderer": "^1.1.0",
     "recoil": "^0.7.7",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
