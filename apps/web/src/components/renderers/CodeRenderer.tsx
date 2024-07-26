@@ -10,7 +10,7 @@ import { CodeLanguageType, TestCaseType } from "@repo/db/client";
 import { useRecoilState } from "recoil";
 import { programAtom } from "../../atoms/userAtoms";
 import { useAction } from "../../hooks/useAction";
-import { didUserSolve, submitProblem } from "../../actions/code";
+import { didUserSolve, submitProblem, testProblem } from "../../actions/code";
 import LoadingSpinner from "../LoadingSpinner";
 import ResultModal from "../resultModal";
 import { Check } from "lucide-react";
@@ -53,33 +53,84 @@ export default ({
   const [selectedTestcase, setSelectedTestcase] = useState(testcases[0]);
   const [showResult, setShowResult] = useState(false);
   const [alreadySolved, setAlredySolved] = useState(false);
-  const [submissionResult, setSubmissionResult] = useState({
+  const [submissionResult, setSubmissionResult] = useState<{
+    input: string | undefined;
+    expectedOutput: string | undefined;
+    yourOutput: string | null;
+    isSuccess: boolean;
+    totalTestCases: number;
+    passedTestCases: number;
+  }>({
     isSuccess: false,
     totalTestCases: 0,
     passedTestCases: 0,
+    input: undefined,
+    expectedOutput: undefined,
+    yourOutput: null,
   });
-  const { execute, fieldErrors } = useAction(submitProblem, {
-    onSuccess: (data) => {
-      // TODO: show success toast
-      console.log("abc", data);
-      setSubmissionResult({
-        isSuccess: data.testCasesPassed === data.totalTestCases,
-        totalTestCases: data.totalTestCases,
-        passedTestCases: data.testCasesPassed,
-      });
-      setShowResult(true);
-    },
-    onError: (error) => {
-      // TODO: show failure toast
-      setSubmissionResult({
-        isSuccess: false,
-        totalTestCases: 0,
-        passedTestCases: 0,
-      });
-      setShowResult(true);
-    },
-  });
+  const { execute: executeSubmit, fieldErrors: submitFieldErrors } = useAction(
+    submitProblem,
+    {
+      onSuccess: (data) => {
+        // TODO: show success toast
+        const isSuccess = data.testCasesPassed === data.totalTestCases;
+        setSubmissionResult({
+          isSuccess: isSuccess,
+          totalTestCases: data.totalTestCases,
+          passedTestCases: data.testCasesPassed,
+          input: data.lastTestCase?.input,
+          expectedOutput: data.lastTestCase?.expectedOutput,
+          yourOutput: data.stdout,
+        });
+        setShowResult(true);
+      },
+      onError: (error) => {
+        // TODO: show failure toast
+        setSubmissionResult({
+          isSuccess: false,
+          totalTestCases: 0,
+          passedTestCases: 0,
+          expectedOutput: undefined,
+          input: undefined,
+          yourOutput: null,
+        });
+        setShowResult(true);
+      },
+    }
+  );
 
+  const { execute: executeTest, fieldErrors: testFieldErrors } = useAction(
+    testProblem,
+    {
+      onSuccess: (data) => {
+        // TODO: show success toast
+        const isSuccess = data.status == "Accepted";
+        console.log(isSuccess);
+        setSubmissionResult({
+          isSuccess: isSuccess,
+          totalTestCases: 1,
+          passedTestCases: isSuccess ? 1 : 0,
+          input: isSuccess ? undefined : data.input,
+          expectedOutput: isSuccess ? undefined : data.expectedOutput,
+          yourOutput: isSuccess ? undefined : data.yourOutput,
+        });
+        setShowResult(true);
+      },
+      onError: (error) => {
+        // TODO: show failure toast
+        console.log(error);
+        setSubmissionResult({
+          isSuccess: false,
+          totalTestCases: 0,
+          passedTestCases: 0,
+          expectedOutput: undefined,
+          input: undefined,
+          yourOutput: null,
+        });
+        setShowResult(true);
+      },
+    }
+  );
   const handleDrag = (event: any, info: any) => {
     const containerWidth = window.innerWidth;
     const currentWidth = (leftWidth / 100) * containerWidth;
@@ -105,10 +156,10 @@ export default ({
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const response = await execute({
+      const response = await executeSubmit({
         languageId: selectedLanguage.id,
         problemStatementId: problem.problemStatement?.id!,
-        sourceCode: program.code,
+        sourceCode: btoa(program.code),
       });
     } finally {
       setIsLoading(false);
@@ -119,8 +170,23 @@ export default ({
     setShowResult(false);
   };
 
-  const handleTest = () => {
-    console.log("Testing code");
+  const handleTest = async () => {
+    setIsLoading(true);
+    try {
+      const response = await executeTest({
+        languageId: selectedLanguage.id,
+        problemStatementId: problem.problemStatement?.id!,
+        sourceCode: btoa(program.code),
+        input: selectedTestcase.input,
+        expectedOutput:
+          selectedTestcase.id == "custom"
+            ? undefined
+            : selectedTestcase.expectedOutput,
+      });
+    } finally {
+      setIsLoading(false);
+      setShowResult(true);
+    }
   };
 
   useEffect(() => {
@@ -143,6 +209,13 @@ export default ({
           isSuccess={submissionResult.isSuccess}
           totalTestCases={submissionResult.totalTestCases}
           passedTestCases={submissionResult.passedTestCases}
+          input={submissionResult.input}
+          expectedOutput={submissionResult.expectedOutput}
+          yourOutput={
+            submissionResult.yourOutput
+              ? submissionResult.yourOutput
+              : undefined
+          }
           onClose={closeResultModal}
         />
       )}

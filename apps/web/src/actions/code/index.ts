@@ -1,10 +1,14 @@
 "use server";
 import { getServerSession } from "next-auth";
-import { BatchSubmissionResponse, InputTypeCreateSubmission } from "./types";
+import {
+  BatchSubmissionResponse,
+  InputTypeCreateSubmission,
+  InputTypeCreateTest,
+} from "./types";
 import { authOptions } from "../../lib/auth";
 import prisma, { SubmissionType } from "@repo/db/client";
 import { createSafeAction } from "../../lib/createSafeAction";
-import { createSubmissionSchema } from "./schema";
+import { createSubmissionSchema, createTestSchema } from "./schema";
 
 const processSubmissionData = ({
   languageId,
@@ -30,10 +34,15 @@ const processSubmissionData = ({
   processedSubmissions.forEach((submission: any) => {
     runtime += parseFloat(submission.time) * 1000;
     memoryUsage += submission.memory;
-    if (submission.status.id > 3 && !failedSubmission) {
+
+    if (
+      submission.stdout?.trim() !==
+        tokenMap[submission.token].expectedOutput?.trim() &&
+      !failedSubmission
+    ) {
       failedSubmission = submission;
       lastTestCase = tokenMap[submission.token];
-    } else if (submission.status.id === 3) {
+    } else {
       testCasesPassed += 1;
     }
   });
@@ -73,20 +82,21 @@ const fetchSubmissions = async (
       },
     }
   );
-
   const newData: BatchSubmissionResponse = await subRes.json();
-  console.log(newData);
 
-  const processingSubmissions = newData.submissions.filter(
+  if (!newData.submissions) {
+  }
+
+  const processingSubmissions = newData.submissions?.filter(
     // @ts-ignore
     (submission) => submission.status.id <= 2
   );
-  const processedSubmissions = newData.submissions.filter(
+  const processedSubmissions = newData.submissions?.filter(
     // @ts-ignore
     (submission) => submission.status.id > 2
   );
 
-  if (processingSubmissions.length > 0) {
+  if (processingSubmissions?.length > 0) {
     if (retryCount >= maxRetries) {
       console.error("Maximum number of retries reached.");
       resolve([]);
@@ -116,50 +126,69 @@ function processSubmission(
   language_id: number,
   mainCode: string,
   testcase: string,
-  expected_output: string
+  expected_output?: string
 ) {
+  source_code = atob(source_code);
+
+  let result;
+
   switch (language_id) {
     case 71: // Python
-      return {
-        source_code: `${source_code}\n\ninput = '''${testcase}'''\n${mainCode}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result = source_code + "\n\ninput = '''" + testcase + "'''\n" + mainCode;
+      break;
     case 48: // C
-      return {
-        source_code: `${source_code}\n\nint main() {\n    char input[] = "${testcase}";\n    ${mainCode}\n    return 0;\n}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result =
+        source_code +
+        '\n\nint main() {\n    char input[] = "' +
+        testcase +
+        '";\n    ' +
+        mainCode +
+        "\n    return 0;\n}";
+      break;
     case 13: // C++
-      return {
-        source_code: `#include <string>\n${source_code}\n\nint main() {\n    std::string input = "${testcase}";\n    ${mainCode}\n    return 0;\n}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result =
+        "#include <string>\n" +
+        source_code +
+        '\n\nint main() {\n    std::string input = "' +
+        testcase +
+        '";\n    ' +
+        mainCode +
+        "\n    return 0;\n}";
+      break;
     case 51: // C#
-      return {
-        source_code: `${source_code}\n\nclass Program {\n    static void Main(string[] args) {\n        string input = @"${testcase}";\n        ${mainCode}\n    }\n}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result =
+        source_code +
+        '\n\nclass Program {\n    static void Main(string[] args) {\n        string input = @"' +
+        testcase +
+        '";\n        ' +
+        mainCode +
+        "\n    }\n}";
+      break;
     case 62: // Java
-      return {
-        source_code: `${source_code}\n\npublic class Main {\n    public static void main(String[] args) {\n        String input = "${testcase}";\n        ${mainCode}\n    }\n}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result =
+        source_code +
+        '\n\npublic class Main {\n    public static void main(String[] args) {\n        String input = "' +
+        testcase +
+        '";\n        ' +
+        mainCode +
+        "\n    }\n}";
+      break;
     case 63: // JavaScript
-      return {
-        source_code: `${source_code}\n\nconst input = \`${testcase}\`;\n${mainCode}`,
-        language_id: language_id,
-        expected_output: expected_output,
-      };
+      result =
+        source_code + "\n\nconst input = '" + testcase + "';\n" + mainCode;
+      break;
     default:
-      throw new Error(`Unsupported language ID: ${language_id}`);
+      throw new Error("Unsupported language ID: " + language_id);
   }
-}
 
+  result = btoa(result);
+
+  return {
+    source_code: result,
+    language_id: language_id,
+    expected_output: expected_output,
+  };
+}
 async function submitProblemHandler(data: InputTypeCreateSubmission) {
   try {
     const session = await getServerSession(authOptions);
@@ -180,7 +209,7 @@ async function submitProblemHandler(data: InputTypeCreateSubmission) {
     if (!problemStatement) {
       return { error: "problem statement not found" };
     }
-    const API_URL = `${process.env.JUDE0_URL}/submissions/batch`;
+    const API_URL = `${process.env.JUDE0_URL}/submissions/batch?base64_encoded=true`;
     const submissions = problemStatement.testCases.map((testCase) => {
       const program = problemStatement.programs.find(
         (pgram) => pgram.codeLaungageId === languageId
@@ -229,13 +258,13 @@ async function submitProblemHandler(data: InputTypeCreateSubmission) {
         ? processSubmissionData({
             languageId,
             userId,
-            sourceCode,
+            sourceCode: atob(sourceCode),
             tokenMap,
             problemStatementId,
             processedSubmissions,
           })
         : {
-            code: sourceCode,
+            code: atob(sourceCode),
             codeLanguageId: languageId,
             statusId: 5,
             statusDesc: "Time Limit Exceeded",
@@ -250,8 +279,10 @@ async function submitProblemHandler(data: InputTypeCreateSubmission) {
           };
     const submission = await prisma.submission.create({
       data: submissionData,
+      include: {
+        lastTestCase: true,
+      },
     });
-    console.log(submission);
 
     return {
       data: {
@@ -293,11 +324,16 @@ export async function getAllSubmissions(problemStatementId: string) {
   const submissions = await prisma.submission.findMany({
     where: {
       problemStatementId: problemStatementId,
-      userId: userId, 
+      userId: userId,
+    },
+    include: {
+      lastTestCase: true,
+    },
+    orderBy: {
+      createdAt: "desc",
     },
   });
-  console.log(submissions);
-  
+
   return { data: submissions };
 }
 
@@ -318,7 +354,114 @@ export async function getTestCasesLengthAndLabel(
   return { data: { length: testcases.length, languageLabel: language?.label } };
 }
 
+const runTestHandler = async (data: InputTypeCreateTest) => {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return { error: "user not logged in" };
+    }
+    const userId = session.user.id;
+    const {
+      input,
+      languageId,
+      problemStatementId,
+      sourceCode,
+      expectedOutput,
+    } = data;
+    const problemStatement = await prisma.problemStatement.findFirst({
+      where: { id: problemStatementId },
+      include: {
+        programs: true,
+      },
+    });
+    if (!problemStatement) {
+      return { error: "problem statement not found" };
+    }
+    const program = problemStatement.programs.find(
+      (pgram) => pgram.codeLaungageId === languageId
+    );
+    if (!program) {
+      return {
+        error: "problem is not set properly contact your professor",
+      };
+    }
+    const API_URL = `${process.env.JUDE0_URL}/submissions/batch?base64_encoded=true`;
+    let eo = expectedOutput;
+    if (!expectedOutput) {
+      const correctSubmission = processSubmission(
+        btoa(program.correctCode),
+        languageId,
+        program.mainCode,
+        input
+      );
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          submissions: [correctSubmission],
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          // @ts-ignore
+          [process.env.API_PROVIDER]: process.env.API_KEY,
+        },
+      });
+      const resData: any[] = await res.json();
+      const tokenString = resData.map((props: any) => props.token).join(",");
+
+      const processedSubmissions = await new Promise<any[]>((resolve) => {
+        fetchSubmissions(tokenString, resolve);
+      });
+      eo = processedSubmissions[0].stdout;
+    }
+
+    const userSubmission = processSubmission(
+      sourceCode,
+      languageId,
+      program.mainCode,
+      input,
+      eo
+    );
+
+    const res1 = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        submissions: [userSubmission],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        // @ts-ignore
+        [process.env.API_PROVIDER]: process.env.API_KEY,
+      },
+    });
+
+    const resData: any[] = await res1.json();
+    const tokenString = resData.map((props: any) => props.token).join(",");
+
+    const processedSubmissions = await new Promise<any[]>((resolve) => {
+      fetchSubmissions(tokenString, resolve);
+    });
+    const submissionData = processedSubmissions[0];
+
+    return {
+      data: {
+        expectedOutput: eo,
+        yourOutput: submissionData.stdout,
+        input,
+        status:
+          submissionData.stdout?.trim() !== eo?.trim()
+            ? "Wrong Answer"
+            : "Accepted",
+      },
+    };
+  } catch (error: any) {
+    return { error: error.message || "failed to test the problem" };
+  }
+};
+
 export const submitProblem = createSafeAction(
   createSubmissionSchema,
   submitProblemHandler
 );
+
+export const testProblem = createSafeAction(createTestSchema, runTestHandler);

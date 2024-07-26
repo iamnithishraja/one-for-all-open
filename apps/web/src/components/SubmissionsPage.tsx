@@ -4,19 +4,18 @@ import { X } from "lucide-react";
 import { Button } from "@repo/ui";
 import { formatDistanceToNow } from "date-fns";
 import { getAllSubmissions, getTestCasesLengthAndLabel } from "../actions/code";
-import { SubmissionType } from "@repo/db/client";
+import { SubmissionType, TestCaseType } from "@repo/db/client";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { githubGist } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 export const SubmissionTab = ({ problemId }: { problemId: string }) => {
-  const [submissions, setSubmissions] = useState<SubmissionType[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] =
     useState<null | SubmissionType>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fetchSubmissions = async () => {
     try {
       const response = await getAllSubmissions(problemId);
-      console.log(response);
 
       if (!response.data) {
         return;
@@ -31,7 +30,7 @@ export const SubmissionTab = ({ problemId }: { problemId: string }) => {
     fetchSubmissions();
   }, [problemId]);
 
-  const handleSubmissionClick = (submission: SubmissionType) => {
+  const handleSubmissionClick = (submission: any) => {
     setSelectedSubmission(submission);
     setIsModalOpen(true);
   };
@@ -83,7 +82,7 @@ const SubmissionModal = ({
   submission,
   onClose,
 }: {
-  submission: SubmissionType;
+  submission: any;
   onClose: () => void;
 }) => {
   const [info, setInfo] = useState<
@@ -110,7 +109,7 @@ const SubmissionModal = ({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="bg-card rounded-lg p-6 shadow-xl max-w-4xl w-full"
+        className="bg-card rounded-lg p-6 shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Submission Details</h2>
@@ -122,7 +121,7 @@ const SubmissionModal = ({
           <div>
             <h3 className="font-semibold">Status</h3>
             <p
-              className={`${submission.statusDesc == "Accepted" ? "text-green-500" : "text-red-500"}`}
+              className={`${submission.statusDesc === "Accepted" ? "text-green-500" : "text-red-500"}`}
             >
               {submission.statusDesc}
             </p>
@@ -150,6 +149,28 @@ const SubmissionModal = ({
               <h3 className="font-semibold">Error Message</h3>
               <p className="text-red-500">{submission.errorMessage}</p>
             </div>
+          )}
+          {submission.statusDesc !== "Accepted" && submission.lastTestCase && submission.stdout && (
+            <>
+              <div className="col-span-2">
+                <h3 className="font-semibold">For Input</h3>
+                <pre className="bg-background text-foreground p-2 rounded overflow-x-auto text-sm">
+                  {submission.lastTestCase.input}
+                </pre>
+              </div>
+              <div>
+                <h3 className="font-semibold">Expected Output</h3>
+                <pre className="bg-background text-foreground p-2 rounded overflow-x-auto text-sm">
+                  {submission.lastTestCase.expectedOutput}
+                </pre>
+              </div>
+              <div>
+                <h3 className="font-semibold">Your Output</h3>
+                <pre className="bg-background text-foreground p-2 rounded overflow-x-auto text-sm">
+                  {submission.stdout}
+                </pre>
+              </div>
+            </>
           )}
         </div>
         <div className="mt-4">

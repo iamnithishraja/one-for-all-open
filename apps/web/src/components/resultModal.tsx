@@ -1,17 +1,23 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react"; // Assuming you're using lucide-react for icons
+import { X } from "lucide-react"; 
 
 const ResultModal = ({
   isSuccess,
   totalTestCases,
   passedTestCases,
   onClose,
+  input,
+  expectedOutput,
+  yourOutput,
 }: {
-  isSuccess: Boolean;
+  isSuccess: boolean;
   totalTestCases: number;
   passedTestCases: number;
   onClose: () => void;
+  input?: string;
+  expectedOutput?: string;
+  yourOutput?: string;
 }) => {
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -43,11 +49,33 @@ const ResultModal = ({
             </span>
           </div>
         </div>
-        <p className="text-foreground">
+        <p className="text-foreground mb-4">
           {isSuccess
             ? "Congratulations! All test cases passed."
             : `${totalTestCases - passedTestCases} test case(s) failed. Please review your code and try again.`}
         </p>
+        {!isSuccess && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-foreground font-semibold mb-1">For Input:</h3>
+              <pre className="bg-background text-foreground p-2 rounded overflow-x-auto">
+                {input}
+              </pre>
+            </div>
+            <div>
+              <h3 className="text-foreground font-semibold mb-1">Expected Output:</h3>
+              <pre className="bg-background text-foreground p-2 rounded overflow-x-auto">
+                {expectedOutput}
+              </pre>
+            </div>
+            <div>
+              <h3 className="text-foreground font-semibold mb-1">Your Output:</h3>
+              <pre className="bg-background text-foreground p-2 rounded overflow-x-auto">
+                {yourOutput}
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
