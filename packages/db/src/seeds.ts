@@ -1,17 +1,24 @@
-
+// seeds.ts
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-    
-    await prisma.college.deleteMany({});
+    // Delete records in the correct order to handle foreign key constraints
+    await prisma.submission.deleteMany({});
+    await prisma.testCase.deleteMany({});
+    await prisma.problemStatement.deleteMany({});
+    await prisma.problem.deleteMany({});
+    await prisma.quizScore.deleteMany({});
+    await prisma.mCQQuestion.deleteMany({});
+    await prisma.track.deleteMany({});
+    await prisma.subject.deleteMany({});
     await prisma.course.deleteMany({});
     await prisma.user.deleteMany({});
+    await prisma.college.deleteMany({});
     await prisma.codeLanguage.deleteMany({});
-    await prisma.problem.deleteMany({});
-    await prisma.submission.deleteMany({});
 
+    // Create sample data
     const college1 = await prisma.college.create({
         data: {
             name: 'Tech University',

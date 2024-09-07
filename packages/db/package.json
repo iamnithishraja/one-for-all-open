@@ -10,7 +10,7 @@
   "scripts": {
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
-    "prisma:seed": ""
+    "prisma:seed": "npx ts-node ./src/seeds.ts"
   },
   "keywords": [],
   "author": "",
