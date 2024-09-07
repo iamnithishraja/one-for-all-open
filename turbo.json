@@ -17,8 +17,21 @@
     "lint": {},
     "type-check": {},
     "dev": {
+      "dependsOn": [
+        "prisma:migrate",
+        "prisma:generate"
+      ],
       "cache": false,
       "persistent": true
+    },
+    "prisma:generate": {
+      "cache": false,
+      "dependsOn": [
+        "prisma:migrate"
+      ]
+    },
+    "prisma:migrate": {
+      "cache": false
     },
     "clean": {
       "cache": false

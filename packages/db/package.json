@@ -1,16 +1,16 @@
 {
   "name": "@repo/db",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "devDependencies": {
-    "@repo/eslint-config": "*"
+    "@repo/eslint-config": "workspace:*"
   },
   "exports": {
     "./client": "./src/index.ts"
+  },
+  "scripts": {
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
+    "prisma:seed": ""
   },
   "keywords": [],
   "author": "",

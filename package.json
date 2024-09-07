@@ -9,19 +9,18 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.5.4",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
-    "turbo": "^2.0.4"
+    "ts-node": "^10.9.2",
+    "turbo": "^2.0.4",
+    "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=18"
   },
   "name": "with-tailwind",
-  "packageManager": "npm@10.2.3",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "packageManager": "pnpm@9.9.0"
 }
