@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 6006",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 6006",
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -32,7 +32,7 @@
     "eslint-config-next": "14.2.3",
     "eslint-plugin-storybook": "^0.8.0",
     "postcss": "^8",
-    "storybook": "^0.1.0",
+    "storybook": "^8.2.9",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
